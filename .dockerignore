@@ -1,0 +1,7 @@
+# Ignore runtime data volumes
+data/
+logs/
+captchas/
+audits/
+.git/
+node_modules/

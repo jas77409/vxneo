@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  vxneo-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - HIBP_API_KEY=${HIBP_API_KEY}
+      - BROWSERLESS_TOKEN=${BROWSERLESS_TOKEN}
+      - REDIS_URL=redis://redis:6379
+      - SITE_URL=${SITE_URL}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  audit-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: node src/lib/audit/worker.js
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - HIBP_API_KEY=${HIBP_API_KEY}
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+    depends_on:
+      - redis
+
+  scraper-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: node src/lib/scraper.js
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - BROWSERLESS_TOKEN=${BROWSERLESS_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./logs:/app/logs
+      - ./screenshots:/app/screenshots
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+    depends_on:
+      - redis
+      - browserless
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  browserless:
+    image: browserless/chrome:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10
+      - CONNECTION_TIMEOUT=60000
+      - MAX_QUEUE_LENGTH=10
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+
+  dns-privacy:
+    image: adguard/adguardhome:latest
+    container_name: adguard
+    ports:
+      - "5353:53/tcp"
+      - "5353:53/udp"
+      - "784:784/udp"
+      - "3002:3000/tcp"
+      - "853:853/tcp"
+      - "5443:5443/tcp"
+    volumes:
+      - ./adguard/work:/opt/adguardhome/work
+      - ./adguard/conf:/opt/adguardhome/conf
+    restart: unless-stopped
+    networks:
+      - vxneo-network
+
+networks:
+  vxneo-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

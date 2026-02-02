@@ -1,0 +1,10 @@
+
+Contact: contact@vxneo.com
+Contact: https://vxneo.com/security
+Encryption: https://vxneo.com/.well-known/pgp-key.txt
+Expires: 2026-12-31T23:59:59.000Z
+Acknowledgments: https://vxneo.com/security/hall-of-fame
+Preferred-Languages: en
+Canonical: https://vxneo.com/.well-known/security.txt
+Policy: https://vxneo.com/security/policy
+Hiring: https://vxneo.com/careers

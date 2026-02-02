@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+		<link href="./_app/immutable/assets/0.D2cOoQVa.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[--><!----><header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between"><div class="flex items-center"><a href="/" class="flex items-center space-x-2"><svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> <span class="text-2xl font-bold text-gray-900">VXneo</span></a></div> <div class="hidden md:flex items-center space-x-6"><a href="/" class="text-gray-700 hover:text-blue-600 transition-colors px-3 py-2 text-sm font-medium">Home</a> <a href="/blog" class="text-gray-700 hover:text-blue-600 transition-colors px-3 py-2 text-sm font-medium">Blog</a> <!--[!--><!--]--></div> <div class="md:hidden"><button type="button" class="text-gray-700 hover:text-gray-900" aria-label="Toggle mobile menu"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button></div> <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200 absolute top-full left-0 right-0"><div class="px-4 py-3 space-y-1"><a href="/" class="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md text-base font-medium">Home</a> <a href="/blog" class="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md text-base font-medium">Blog</a> <!--[!--><!--]--></div></div></nav></header> <main class="grid montfort gap-6 py-8"><!--[--><!----><div class="grid montfort gap-6"><h1></h1> <p>An error occurred</p> <!--[!--><!--]--></div><!----><!--]--></main> <!--[--><!--]--><!----><!--]--> <!--[!--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_k3xcb9 = {
+						base: new URL(".", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.CxGkpBfa.js"),
+						import("./_app/immutable/entry/app.C30Aincu.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 1],
+							data: [null],
+							form: null,
+							error: {message:"Not Found"},
+							status: 404
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

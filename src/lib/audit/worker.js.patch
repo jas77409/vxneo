@@ -1,0 +1,26 @@
+  async processAudits() {
+    try {
+      logger.info('Checking for pending audits...');
+
+      // ADD DEBUG LOGGING
+      console.log('=== DEBUG: Querying audit_requests ===');
+      console.log('Looking for status: pending');
+
+      // Fetch pending audit requests
+      const { data: audits, error } = await supabase
+        .from('audit_requests')
+        .select('id, email, user_id, status, created_at')
+        .eq('status', 'pending')
+        .limit(10);
+
+      // ADD MORE DEBUG
+      console.log('Query result:', { 
+        error: error?.message, 
+        count: audits?.length,
+        audits: audits 
+      });
+
+      if (error) {
+        logger.error('Error fetching audits:', error);
+        return;
+      }

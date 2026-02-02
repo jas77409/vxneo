@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error | VXNEO</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .error-container {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 2rem;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+        }
+        .error-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        .home-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .contact-link {
+            margin-top: 2rem;
+            display: block;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+        }
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">$status</div>
+        <h1 class="error-title">Oops! Something went wrong</h1>
+        <p class="error-message">
+            We're sorry, but an error has occurred. Our team has been notified.
+        </p>
+        <a href="/" class="home-button">Return to Homepage</a>
+        <a href="mailto:support@vxneo.com" class="contact-link">
+            Contact Support
+        </a>
+    </div>
+</body>
+</html>

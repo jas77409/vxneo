@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /grafana/
+Disallow: /prometheus/
+Disallow: /adguard/
+Disallow: /browserless/
+Disallow: /api/
+Disallow: /health
+Disallow: /metrics
+Disallow: /auth/
+Disallow: /dashboard/internal/
+
+# Crawl delay (requests per second)
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://vxneo.com/sitemap.xml
+
+# Host
+Host: https://vxneo.com

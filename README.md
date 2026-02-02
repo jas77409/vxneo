@@ -1,38 +1,55 @@
-# sv
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+# VXNEO Hybrid - Open Source Data Broker Opt-Out Platform
 
-## Creating a project
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## 🚀 Overview
+VXNEO is an automated platform that helps individuals opt out from data broker websites. It uses web automation to submit removal requests on your behalf, saving you hours of manual work.
 
+## ✨ Features
+- **Automated Opt-Out**: Submits requests to multiple data brokers automatically
+- **Modern Stack**: Built with SvelteKit, TailwindCSS, and Playwright
+- **Secure Authentication**: Magic link login via Supabase
+- **Proxy Rotation**: Built-in proxy support to avoid detection
+- **CAPTCHA Handling**: Integrated CAPTCHA solving capabilities
+- **Real-time Dashboard**: Monitor your opt-out progress
+- **Production Ready**: PM2 cluster mode, logging, and monitoring
+- **Docker Support**: Easy containerized deployment
+
+## 🏗️ Architecture
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Frontend │───▶│ API │───▶│ Scraper │
+│ (SvelteKit)│ │ (Node.js) │ │ (Playwright)│
+└─────────────┘ └─────────────┘ └─────────────┘
+│ │
+┌──────▼──────┐ ┌─────▼──────┐
+│ Database │ │ Proxy │
+│ (Supabase) │ │ Rotation │
+└─────────────┘ └────────────┘
+
+text
+
+## 🚦 Quick Start
+
+### Prerequisites
+- Node.js 18+ and npm
+- [Supabase account](https://supabase.com) (free tier)
+- Git
+
+### Installation
 ```bash
-# create a new project in the current directory
-npx sv create
+# Clone the repository
+git clone https://github.com/yourusername/vxneo-hybrid.git
+cd vxneo-hybrid
 
-# create a new project in my-app
-npx sv create my-app
-```
+# Install dependencies
+npm install
 
-## Developing
+# Set up environment
+cp .env.example .env
+# Edit .env with your Supabase credentials
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
+# Run development server
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.

@@ -1,23 +1,168 @@
-node_modules
+# Dependencies
+node_modules/
+.npm
+.pnpm
+.yarn/cache
+.yarn/install-state.gz
 
-# Output
-.output
-.vercel
-.netlify
-.wrangler
-/.svelte-kit
-/build
+# Build outputs
+build/
+dist/
+.svelte-kit/
+.output/
+.cache/
+*.tmp
+*.temp
 
-# OS
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.backup*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+*.lcov
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
-# Env
-.env
-.env.*
-!.env.example
-!.env.test
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+# Sensitive data
+captchas/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.der
+secrets/
+credentials/
+
+# Personal/sensitive files
+email.txt
+deploy.sh
+deploy-verify.sh
+fix-ports.sh
+diagnose-544.sh
+check-supabase-urls.sh
+deploy-*.sh
+fix-*.sh
+
+# Screenshots
+screenshot.png
+mont-fort-viewport.png
+*.png
+*.jpg
+*.jpeg
+
+# Browser sessions
+*.session
+*.profile
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# PM2
+.pm2/
+.pm2/**
+
+# Temporary
+tmp/
+temp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Hidden system files
+.*.un~
+.gradle
+.vscode-test
+
+# Analysis files
+analyze.js
+mont-fort-analysis.json
+iptables-backup.txt
+tree.log
+
+# Supabase local
+.supabase/
+data/adguard/
+
+# Data directories
+data/
+logs/
+
+# Snapshots and backups
+*.tar.gz
+vxneo-snapshot-*/
+*.backup*
+*.save*
+*.bak
+*.old
+
+# Test files
+test-*.js
+test-*.mjs
+check-*.js
+diagnostic-output.txt
+project-structure.txt
+
+# Build artifacts
+a.out
+vite
+
+# Duplicate files
+Package.json
+vxneo-simple
+vxneo-hybrid@*
+
+# Browser extension (if in development)
+browser-extension/
+content-script.js
+
+# Old directories not needed with Docker
+server/
+scripts/
+ecosystem.config.cjs
+pm2.config.cjs
