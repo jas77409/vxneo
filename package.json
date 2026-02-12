@@ -17,9 +17,14 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.39.0",
     "@sveltejs/adapter-node": "^5.4.0",
-    "axios": "^1.7.7",
+    "axios": "^1.13.5",
+    "csv-parser": "^3.2.0",
     "dotenv": "^16.6.1",
+    "hibp": "^15.2.1",
+    "node-cache": "^5.1.2",
     "playwright": "^1.47.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "rate-limiter-flexible": "^9.0.1"
   },
   "devDependencies": {

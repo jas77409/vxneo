@@ -1,0 +1,376 @@
+[33mtag v1.0.0[m
+Tagger: jas77409 <jas.panglia@outlook.com>
+Date:   Mon Feb 2 23:40:14 2026 +0000
+
+VXNeo v1.0.0 - Initial Open Source Release
+
+Complete privacy audit platform with:
+- Automated breach detection
+- Privacy score calculation
+- Magic link authentication
+- Background workers
+- Docker deployment
+- Modern dashboard
+
+[33mcommit 08c0ab68663ace5efa8df0abe66b2bf6c70942ea[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.0.0[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: jas77409 <jas.panglia@outlook.com>
+Date:   Mon Feb 2 22:35:17 2026 +0000
+
+    docs: add comprehensive project documentation
+    
+    - Add MIT License
+    - Add Contributing guidelines
+    - Update README with full overview
+    - Add architecture diagram
+    - Document tech stack and features
+
+[1mdiff --git a/CONTRIBUTING.md b/CONTRIBUTING.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7cef86f[m
+[1m--- /dev/null[m
+[1m+++ b/CONTRIBUTING.md[m
+[36m@@ -0,0 +1,84 @@[m
+[32m+[m[32m# Contributing to VXNeo[m
+[32m+[m
+[32m+[m[32mThank you for your interest in contributing to VXNeo! 🎉[m
+[32m+[m
+[32m+[m[32m## Development Setup[m
+[32m+[m
+[32m+[m[32m1. **Fork and clone**[m
+[32m+[m[32m```bash[m
+[32m+[m[32m   git clone https://github.com/jas77409/vxneo.git[m
+[32m+[m[32m   cd vxneo[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m2. **Install dependencies**[m
+[32m+[m[32m```bash[m
+[32m+[m[32m   npm install[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m3. **Configure environment**[m
+[32m+[m[32m```bash[m
+[32m+[m[32m   cp .env.example .env[m
+[32m+[m[32m   # Edit .env with your Supabase credentials[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m4. **Start development server**[m
+[32m+[m[32m```bash[m
+[32m+[m[32m   npm run dev[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Pull Request Process[m
+[32m+[m
+[32m+[m[32m1. Create a feature branch: `git checkout -b feature/amazing-feature`[m
+[32m+[m[32m2. Make your changes[m
+[32m+[m[32m3. Test thoroughly[m
+[32m+[m[32m4. Commit with clear messages: `git commit -m "feat: add amazing feature"`[m
+[32m+[m[32m5. Push to your fork: `git push origin feature/amazing-feature`[m
+[32m+[m[32m6. Open a Pull Request[m
+[32m+[m
+[32m+[m[32m## Code Style[m
+[32m+[m
+[32m+[m[32m- Use Prettier for formatting[m
+[32m+[m[32m- Follow ESLint rules[m
+[32m+[m[32m- Write meaningful commit messages (conventional commits)[m
+[32m+[m[32m- Add comments for complex logic[m
+[32m+[m
+[32m+[m[32m## Commit Message Format[m
+[32m+[m[32m```[m
+[32m+[m[32m<type>: <subject>[m
+[32m+[m
+[32m+[m[32m<body>[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mTypes:[m
+[32m+[m[32m- `feat`: New feature[m
+[32m+[m[32m- `fix`: Bug fix[m
+[32m+[m[32m- `docs`: Documentation[m
+[32m+[m[32m- `style`: Formatting[m
+[32m+[m[32m- `refactor`: Code restructuring[m
+[32m+[m[32m- `test`: Adding tests[m
+[32m+[m[32m- `chore`: Maintenance[m
+[32m+[m
+[32m+[m[32m## Testing[m
+[32m+[m[32m```bash[m
+[32m+[m[32mnpm test[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Reporting Issues[m
+[32m+[m
+[32m+[m[32mUse GitHub Issues with:[m
+[32m+[m[32m- Clear description[m
+[32m+[m[32m- Steps to reproduce[m
+[32m+[m[32m- Expected vs actual behavior[m
+[32m+[m[32m- Environment details (OS, Node version, etc.)[m
+[32m+[m
+[32m+[m[32m## Security[m
+[32m+[m
+[32m+[m[32mReport security vulnerabilities privately to: contact@vxneo.com[m
+[32m+[m
+[32m+[m[32m**Do not create public issues for security vulnerabilities.**[m
+[32m+[m
+[32m+[m[32m## Questions?[m
+[32m+[m
+[32m+[m[32mFeel free to open a discussion or reach out![m
+[32m+[m
+[32m+[m[32mThank you for contributing! 🙏[m
+[1mdiff --git a/LICENSE b/LICENSE[m
+[1mnew file mode 100644[m
+[1mindex 0000000..d28afb4[m
+[1m--- /dev/null[m
+[1m+++ b/LICENSE[m
+[36m@@ -0,0 +1,21 @@[m
+[32m+[m[32mMIT License[m
+[32m+[m
+[32m+[m[32mCopyright (c) 2026 VXNeo Team[m
+[32m+[m
+[32m+[m[32mPermission is hereby granted, free of charge, to any person obtaining a copy[m
+[32m+[m[32mof this software and associated documentation files (the "Software"), to deal[m
+[32m+[m[32min the Software without restriction, including without limitation the rights[m
+[32m+[m[32mto use, copy, modify, merge, publish, distribute, sublicense, and/or sell[m
+[32m+[m[32mcopies of the Software, and to permit persons to whom the Software is[m
+[32m+[m[32mfurnished to do so, subject to the following conditions:[m
+[32m+[m
+[32m+[m[32mThe above copyright notice and this permission notice shall be included in all[m
+[32m+[m[32mcopies or substantial portions of the Software.[m
+[32m+[m
+[32m+[m[32mTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR[m
+[32m+[m[32mIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,[m
+[32m+[m[32mFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE[m
+[32m+[m[32mAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER[m
+[32m+[m[32mLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,[m
+[32m+[m[32mOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE[m
+[32m+[m[32mSOFTWARE.[m
+[1mdiff --git a/README.md b/README.md[m
+[1mindex c11da05..4491fb6 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -1,55 +1,191 @@[m
+[31m-[m
+[31m-# VXNEO Hybrid - Open Source Data Broker Opt-Out Platform[m
+[32m+[m[32m# VXNeo - Privacy Audit Platform 🔐[m
+ [m
+ [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)[m
+[31m-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)[m
+[31m-[![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)[m
+[32m+[m[32m[![Node](https://img.shields.io/badge/node-20.x-green.svg)](https://nodejs.org)[m
+[32m+[m[32m[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)[m
+ [m
+[31m-## 🚀 Overview[m
+[31m-VXNEO is an automated platform that helps individuals opt out from data broker websites. It uses web automation to submit removal requests on your behalf, saving you hours of manual work.[m
+[32m+[m[32m> Open-source privacy audit platform for detecting data breaches, broker exposures, and calculating comprehensive privacy scores.[m
+ [m
+ ## ✨ Features[m
+[31m-- **Automated Opt-Out**: Submits requests to multiple data brokers automatically[m
+[31m-- **Modern Stack**: Built with SvelteKit, TailwindCSS, and Playwright[m
+[31m-- **Secure Authentication**: Magic link login via Supabase[m
+[31m-- **Proxy Rotation**: Built-in proxy support to avoid detection[m
+[31m-- **CAPTCHA Handling**: Integrated CAPTCHA solving capabilities[m
+[31m-- **Real-time Dashboard**: Monitor your opt-out progress[m
+[31m-- **Production Ready**: PM2 cluster mode, logging, and monitoring[m
+[31m-- **Docker Support**: Easy containerized deployment[m
+[31m-[m
+[31m-## 🏗️ Architecture[m
+[31m-┌─────────────┐ ┌─────────────┐ ┌─────────────┐[m
+[31m-│ Frontend │───▶│ API │───▶│ Scraper │[m
+[31m-│ (SvelteKit)│ │ (Node.js) │ │ (Playwright)│[m
+[31m-└─────────────┘ └─────────────┘ └─────────────┘[m
+[31m-│ │[m
+[31m-┌──────▼──────┐ ┌─────▼──────┐[m
+[31m-│ Database │ │ Proxy │[m
+[31m-│ (Supabase) │ │ Rotation │[m
+[31m-└─────────────┘ └────────────┘[m
+ [m
+[31m-text[m
+[32m+[m[32m- 🔍 **Data Breach Detection** - Scan emails for compromised accounts via HIBP[m
+[32m+[m[32m- 📊 **Privacy Score Calculation** - Get a comprehensive 0-100 privacy rating[m
+[32m+[m[32m- 🎯 **Data Broker Tracking** - Identify where your personal data is being sold[m
+[32m+[m[32m- 🤖 **Automated Processing** - Background workers process audits automatically[m
+[32m+[m[32m- 🔐 **Secure Authentication** - Passwordless magic link authentication via Supabase[m
+[32m+[m[32m- 📱 **Modern Dashboard** - Real-time privacy statistics, breach details, and recommendations[m
+[32m+[m[32m- 🐳 **Docker Ready** - Complete containerized deployment with Docker Compose[m
+ [m
+[31m-## 🚦 Quick Start[m
+[32m+[m[32m## 🚀 Quick Start[m
+ [m
+ ### Prerequisites[m
+[31m-- Node.js 18+ and npm[m
+[31m-- [Supabase account](https://supabase.com) (free tier)[m
+[31m-- Git[m
+[32m+[m
+[32m+[m[32m- Docker & Docker Compose[m
+[32m+[m[32m- Node.js 20+ (for development)[m
+[32m+[m[32m- Supabase account (free tier available)[m
+[32m+[m[32m- Domain with SSL certificate (for production)[m
+ [m
+ ### Installation[m
+ ```bash[m
+ # Clone the repository[m
+[31m-git clone https://github.com/yourusername/vxneo-hybrid.git[m
+[31m-cd vxneo-hybrid[m
+[32m+[m[32mgit clone https://github.com/yourusername/vxneo.git[m
+[32m+[m[32mcd vxneo[m
+[32m+[m
+[32m+[m[32m# Configure environment[m
+[32m+[m[32mcp .env.example .env[m
+[32m+[m[32m# Edit .env with your Supabase credentials and API keys[m
+ [m
+[32m+[m[32m# Start with Docker Compose[m
+[32m+[m[32mdocker-compose up -d[m
+[32m+[m
+[32m+[m[32m# Access at http://localhost:3000[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### Development Setup[m
+[32m+[m[32m```bash[m
+ # Install dependencies[m
+ npm install[m
+ [m
+[31m-# Set up environment[m
+[31m-cp .env.example .env[m
+[31m-# Edit .env with your Supabase credentials[m
+[31m-[m
+[31m-# Run development server[m
+[32m+[m[32m# Start development server[m
+ npm run dev[m
+[32m+[m
+[32m+[m[32m# Build for production[m
+[32m+[m[32mnpm run build[m
+[32m+[m
+[32m+[m[32m# Preview production build[m
+[32m+[m[32mnpm run preview[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## 📖 Documentation[m
+[32m+[m
+[32m+[m[32m- [Installation Guide](./docs/INSTALLATION.md) *(coming soon)*[m
+[32m+[m[32m- [Configuration](./docs/CONFIGURATION.md) *(coming soon)*[m
+[32m+[m[32m- [API Documentation](./docs/API.md) *(coming soon)*[m
+[32m+[m[32m- [Contributing Guidelines](./CONTRIBUTING.md)[m
+[32m+[m
+[32m+[m[32m## 🏗️ Architecture[m
+[32m+[m[32m```[m
+[32m+[m[32m┌─────────────────────────────────────────┐[m
+[32m+[m[32m│         NGINX (Port 443)                │[m
+[32m+[m[32m│         SSL Termination                  │[m
+[32m+[m[32m└──────────────┬──────────────────────────┘[m
+[32m+[m[32m               │[m
+[32m+[m[32m        ┌──────▼───────┐[m
+[32m+[m[32m        │  VXNeo Web   │ (SvelteKit - Port 3000)[m
+[32m+[m[32m        └──────┬───────┘[m
+[32m+[m[32m               │[m
+[32m+[m[32m    ┌──────────┼──────────────┐[m
+[32m+[m[32m    │          │              │[m
+[32m+[m[32m┌───▼───┐  ┌───▼────┐  ┌─────▼─────┐[m
+[32m+[m[32m│ Redis │  │Supabase│  │Browserless│[m
+[32m+[m[32m│(Cache)│  │  (DB)  │  │(Scraping) │[m
+[32m+[m[32m└───────┘  └───┬────┘  └───────────┘[m
+[32m+[m[32m               │[m
+[32m+[m[32m        ┌──────┴──────┐[m
+[32m+[m[32m        │             │[m
+[32m+[m[32m    ┌───▼────┐  ┌─────▼──────┐[m
+[32m+[m[32m    │ Audit  │  │  Scraper   │[m
+[32m+[m[32m    │ Worker │  │  Worker    │[m
+[32m+[m[32m    └────────┘  └────────────┘[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## 🛠️ Tech Stack[m
+[32m+[m
+[32m+[m[32m**Frontend:**[m
+[32m+[m[32m- SvelteKit - Full-stack framework[m
+[32m+[m[32m- Tailwind CSS - Styling[m
+[32m+[m[32m- TypeScript - Type safety[m
+[32m+[m
+[32m+[m[32m**Backend:**[m
+[32m+[m[32m- Node.js 20 - Runtime[m
+[32m+[m[32m- Supabase - PostgreSQL database + Auth[m
+[32m+[m[32m- Redis - Caching and queuing[m
+[32m+[m
+[32m+[m[32m**Workers:**[m
+[32m+[m[32m- Background audit processing[m
+[32m+[m[32m- Data broker scraping[m
+[32m+[m[32m- Automated recommendations[m
+[32m+[m
+[32m+[m[32m**Infrastructure:**[m
+[32m+[m[32m- Docker & Docker Compose[m
+[32m+[m[32m- NGINX - Reverse proxy[m
+[32m+[m[32m- Prometheus & Grafana - Monitoring[m
+[32m+[m
+[32m+[m[32m## 🔐 Security[m
+[32m+[m
+[32m+[m[32m- Passwordless authentication via magic links[m
+[32m+[m[32m- Secure httpOnly cookies for session management[m
+[32m+[m[32m- Row Level Security (RLS) in database[m
+[32m+[m[32m- Environment-based secrets management[m
+[32m+[m[32m- SSL/TLS encryption in production[m
+[32m+[m
+[32m+[m[32m**Reporting Security Issues:** Please email security@vxneo.com[m
+[32m+[m
+[32m+[m[32m## 📊 Database Schema[m
+[32m+[m
+[32m+[m[32mMain tables:[m
+[32m+[m[32m- `audit_requests` - Audit queue and status[m
+[32m+[m[32m- `audit_results` - Detailed audit findings[m
+[32m+[m[32m- `removal_requests` - Data broker removal tracking[m
+[32m+[m[32m- `profiles` - User profile information[m
+[32m+[m
+[32m+[m[32mSee database migrations in `supabase/migrations/` for complete schema.[m
+[32m+[m
+[32m+[m[32m## 🧪 Testing[m
+[32m+[m[32m```bash[m
+[32m+[m[32m# Run tests[m
+[32m+[m[32mnpm test[m
+[32m+[m
+[32m+[m[32m# Run linter[m
+[32m+[m[32mnpm run lint[m
+[32m+[m
+[32m+[m[32m# Format code[m
+[32m+[m[32mnpm run format[m
+[32m+[m
+[32m+[m[32m# Health check[m
+[32m+[m[32mcurl http://localhost:3000/api/system/health[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## 🤝 Contributing[m
+[32m+[m
+[32m+[m[32mContributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.[m
+[32m+[m
+[32m+[m[32m1. Fork the repository[m
+[32m+[m[32m2. Create your feature branch (`git checkout -b feature/amazing-feature`)[m
+[32m+[m[32m3. Commit your changes (`git commit -m 'feat: add amazing feature'`)[m
+[32m+[m[32m4. Push to the branch (`git push origin feature/amazing-feature`)[m
+[32m+[m[32m5. Open a Pull Request[m
+[32m+[m
+[32m+[m[32m## 📝 License[m
+[32m+[m
+[32m+[m[32mThis project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.[m
+[32m+[m
+[32m+[m[32m## 🙏 Acknowledgments[m
+[32m+[m
+[32m+[m[32m- [Have I Been Pwned](https://haveibeenpwned.com/) - Breach data API[m
+[32m+[m[32m- [Supabase](https://supabase.com/) - Backend infrastructure[m
+[32m+[m[32m- [SvelteKit](https://kit.svelte.dev/) - Application framework[m
+[32m+[m[32m- All contributors and users of VXNeo[m
+[32m+[m
+[32m+[m[32m## 📧 Contact[m
+[32m+[m
+[32m+[m[32m- **Website:** https://vxneo.com[m
+[32m+[m[32m- **Issues:** [GitHub Issues](https://github.com/yourusername/vxneo/issues)[m
+[32m+[m[32m- **Email:** contact@vxneo.com[m
+[32m+[m
+[32m+[m[32m## 🗺️ Roadmap[m
+[32m+[m
+[32m+[m[32m- [x] Core privacy audit functionality[m
+[32m+[m[32m- [x] Magic link authentication[m
+[32m+[m[32m- [x] Background worker system[m
+[32m+[m[32m- [x] Docker deployment[m
+[32m+[m[32m- [ ] Real-time breach monitoring[m
+[32m+[m[32m- [ ] Automated data broker removal[m
+[32m+[m[32m- [ ] Multi-email support per user[m
+[32m+[m[32m- [ ] Mobile application[m
+[32m+[m[32m- [ ] Browser extension[m
+[32m+[m[32m- [ ] API for third-party integrations[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m**Made with ❤️ for privacy**[m
