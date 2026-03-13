@@ -1,5 +1,9 @@
 <script>
+  import { createEventDispatcher } from 'svelte';
+  
   export let breaches = [];
+  
+  const dispatch = createEventDispatcher();
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -21,10 +25,13 @@
 
   function truncateDescription(text, maxLength = 200) {
     if (!text) return '';
-    // Remove HTML tags
     const stripped = text.replace(/<[^>]*>/g, '');
     if (stripped.length <= maxLength) return stripped;
     return stripped.substring(0, maxLength) + '...';
+  }
+  
+  function handleBreachClick(breach) {
+    dispatch('clickBreach', breach);
   }
 </script>
 
@@ -46,7 +53,10 @@
   {:else}
     <div class="space-y-4">
       {#each breaches as breach}
-        <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+        <button
+          on:click={() => handleBreachClick(breach)}
+          class="w-full text-left border-2 border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer"
+        >
           <!-- Breach Header -->
           <div class="flex items-start justify-between mb-3">
             <div class="flex items-start gap-3">
@@ -66,14 +76,7 @@
               <div>
                 <h3 class="text-lg font-bold text-gray-800">{breach.name}</h3>
                 {#if breach.domain}
-                  <a 
-                    href="https://{breach.domain}" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-sm text-blue-600 hover:underline"
-                  >
-                    {breach.domain}
-                  </a>
+                  <span class="text-sm text-blue-600">{breach.domain}</span>
                 {/if}
               </div>
             </div>
@@ -122,11 +125,15 @@
 
           <!-- Description -->
           {#if breach.description}
-            <div class="text-sm text-gray-600 leading-relaxed">
+            <div class="text-sm text-gray-600 leading-relaxed mb-2">
               {truncateDescription(breach.description)}
             </div>
           {/if}
-        </div>
+          
+          <div class="text-sm text-blue-600 font-semibold mt-2 flex items-center gap-1">
+            Click for full details →
+          </div>
+        </button>
       {/each}
     </div>
   {/if}

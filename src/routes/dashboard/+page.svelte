@@ -1,6 +1,10 @@
 <script>
   import PrivacyScoreCard from '$lib/components/dashboard/PrivacyScoreCard.svelte';
   import BreachList from '$lib/components/dashboard/BreachList.svelte';
+  import BreachTimeline from '$lib/components/dashboard/BreachTimeline.svelte';
+  import BreachChart from '$lib/components/dashboard/BreachChart.svelte';
+  import BreachDetailsModal from '$lib/components/dashboard/BreachDetailsModal.svelte';
+  import ExportReport from '$lib/components/dashboard/ExportReport.svelte';
   
   export let data;
   
@@ -28,6 +32,16 @@
   let loading = false;
   let message = '';
   let error = '';
+  let showTimeline = false;
+  let selectedBreach = null;
+  
+  function openBreachDetails(breach) {
+    selectedBreach = breach;
+  }
+  
+  function closeBreachDetails() {
+    selectedBreach = null;
+  }
   
   async function startNewAudit() {
     loading = true;
@@ -199,8 +213,9 @@
       
     </div>
 
+
     {#if latestAudit && latestAudit.status === 'completed'}
-      <!-- Privacy Score & Breach Details -->
+      <!-- Privacy Score & Recommendations -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
         <!-- Privacy Score Card (1/3 width) -->
@@ -280,8 +295,35 @@
 
       </div>
 
-      <!-- Breach List -->
-      <BreachList breaches={breaches} />
+      <!-- Toggle Timeline/List View -->
+      <div class="mb-4 flex justify-end">
+        <button
+          on:click={() => showTimeline = !showTimeline}
+          class="px-6 py-3 bg-white border-2 border-purple-200 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all shadow"
+        >
+          {showTimeline ? '📋 Show List View' : '📅 Show Timeline View'}
+        </button>
+      </div>
+
+      {#if showTimeline}
+        <!-- Timeline & Chart View -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <BreachTimeline breaches={breaches} on:clickBreach={(e) => openBreachDetails(e.detail)} />
+          <BreachChart breaches={breaches} />
+        </div>
+      {:else}
+        <!-- List View -->
+        <BreachList breaches={breaches} on:clickBreach={(e) => openBreachDetails(e.detail)} />
+      {/if}
+
+      <!-- Export Report Section -->
+      <div class="mb-8">
+        <ExportReport
+          audit={latestAudit}
+          breaches={breaches}
+          recommendations={recommendations}
+        />
+      </div>
     {/if}
     
     <!-- Recent Audits History -->
@@ -357,6 +399,12 @@
     
   </div>
 </div>
+
+<!-- Breach Details Modal -->
+<BreachDetailsModal 
+  breach={selectedBreach}
+  onClose={closeBreachDetails}
+/>
 
 <style>
   /* Add smooth animations */
