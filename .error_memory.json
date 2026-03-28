@@ -1,0 +1,37 @@
+{
+  "p1_docker": {
+    "cmd": "curl -fsSL https://get.docker.com | sh",
+    "err": "/bin/bash: line 1: docker: command not found",
+    "fix": "apt-get install -y docker.io",
+    "seen": 1,
+    "ts": "2026-03-24T16:21:41.273353"
+  },
+  "p1_compose_plugin": {
+    "cmd": "docker compose version || apt-get install -y docker-compose-plugin",
+    "err": "docker: unknown command: docker compose\n\nRun 'docker --help' for more information",
+    "fix": "apt-get install -y docker-compose-plugin",
+    "seen": 2,
+    "ts": "2026-03-24T17:25:31.710164"
+  },
+  "p1_neo4j_up": {
+    "cmd": "cd /root/companion && docker compose pull neo4j && docker compose up -d neo4j && echo 'Waiting 55s...' && sleep 55",
+    "err": "",
+    "fix": "cd /root/companion && docker compose restart neo4j && sleep 55",
+    "seen": 1,
+    "ts": "2026-03-24T17:29:13.399588"
+  },
+  "p1_verify_redis": {
+    "cmd": "docker exec $(docker ps -qf 'name=redis') redis-cli ping",
+    "err": "",
+    "fix": "cd /root/companion && docker compose restart redis && sleep 5",
+    "seen": 1,
+    "ts": "2026-03-24T17:34:52.631930"
+  },
+  "p2_systemd": {
+    "cmd": "cat > /etc/systemd/system/companion-api.service << 'SEOF'\n[Unit]\nDescription=Companion Intelligence API\nAfter=network.target\n[Service]\nType=simple\nUser=root\nWorkingDirectory=/root/companion\nEnvironment=PYTHONPATH=/root/companion/agent:/root/companion/agent/modes:/root/companion/agent/memory:/root/companion/agent/tools\nExecStart=/root/companion/venv/bin/uvicorn agent.api:app --host 0.0.0.0 --port 8000\nRestart=always\nRestartSec=5\n[Install]\nWantedBy=multi-user.target\nSEOF\nsystemctl daemon-reload && systemctl enable companion-api && systemctl start companion-api && sleep 4 && echo ok",
+    "err": "activating",
+    "fix": "systemctl restart companion-api && sleep 6 && systemctl is-active companion-api",
+    "seen": 1,
+    "ts": "2026-03-24T17:39:19.611757"
+  }
+}

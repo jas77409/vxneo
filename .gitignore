@@ -1,0 +1,11 @@
+.env
+telegram.env
+google_token.json
+google_credentials.json
+__pycache__/
+*.pyc
+venv/
+logs/
+*.jsonl
+*.log
+.DS_Store
