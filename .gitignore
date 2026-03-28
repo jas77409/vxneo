@@ -9,3 +9,12 @@ logs/
 *.jsonl
 *.log
 .DS_Store
+data/
+*.db
+*.db.0
+neo4j/
+qdrant/
+redis/
+__pycache__/
+venv/
+*.pyc
