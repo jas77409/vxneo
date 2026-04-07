@@ -11,6 +11,9 @@ import redis as _redis
 _r = _redis.Redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379'), decode_responses=True)
 
 TASK_KEYWORDS = {
+    'github': ['github','my repo','open issues','recent commits','pull request','create issue'],
+    'notion': ['notion','create note','quick note','add note','search notion','find note','my notes','save note'],
+    'shell':  ['check neo','check telegram','disk space','memory usage','server uptime','server time','check logs','processes','what time','current time','uptime','free memory','server load'],
     'email': ['check my email','unread emails','my inbox','show emails','any emails','new emails','read emails'],
     'memory_store':  ['remember', 'store', 'save this', 'note that', 'keep in mind', 'capture', 'log this'],
     'memory_recall': ['what did i', 'do you remember', 'recall', 'search my memory', 'what have i said'],
@@ -122,6 +125,9 @@ def route(text, context=None):
         'web_search':    handle_web_search,
         'calendar':      handle_calendar_google,
         'email':         handle_email,
+        'github':        handle_github,
+        'notion':        handle_notion,
+        'shell':         handle_shell,
     }
     if task_type in handlers:
         result = handlers[task_type](text)
@@ -174,3 +180,44 @@ def handle_calendar_google(text):
         return {'task_type':'calendar','success':True,'message':'Upcoming events:\n\n' + '\n'.join(lines)}
     except Exception as e:
         return {'task_type':'calendar','success':False,'message':f'Calendar error: {e}'}
+
+
+def handle_notion(text):
+    import sys as _s; _s.path.insert(0,'/root/companion/agent/tools')
+    try:
+        from notion_tools import route_notion_task
+        return route_notion_task(text)
+    except Exception as e:
+        return {'task_type':'notion','success':False,'message':f'Notion error: {e}'}
+
+def handle_github(text):
+    sys.path.insert(0, '/root/companion/agent/tools')
+    try:
+        from github_tools import route_github_task
+        return route_github_task(text)
+    except Exception as e:
+        return {'task_type':'github','success':False,'message':f'GitHub tools error: {e}'}
+
+def handle_shell(text):
+    sys.path.insert(0, '/root/companion/agent/tools')
+    try:
+        from github_tools import run_command
+        cmd_map = {
+            'server time': 'date',
+            'current time': 'date',
+            'what time': 'date',
+            'check neo': 'systemctl status companion-api --no-pager | head -8',
+            'check telegram': 'systemctl status neo-telegram --no-pager | head -8',
+            'disk space': 'df -h / | tail -1',
+            'memory': 'free -h | head -2',
+            'uptime': 'uptime',
+            'processes': 'ps aux --sort=-%cpu | head -8',
+        }
+        t = text.lower()
+        for key, cmd in cmd_map.items():
+            if key in t:
+                r = run_command(cmd)
+                return {'task_type':'shell','success':True,'message':r['stdout'] or r['error']}
+        return {'task_type':'shell','success':False,'message':'Specify what to check: neo, telegram, disk, memory, uptime'}
+    except Exception as e:
+        return {'task_type':'shell','success':False,'message':f'Shell error: {e}'}

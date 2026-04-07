@@ -58,7 +58,7 @@ except Exception as e:
     print('[memory] Qdrant unavailable:', e)
 
 
-def write_memory(content, memory_type='Capture', salience=0.6):
+def write_memory(content, memory_type='Capture', salience=0.6, user_id='jas_personal'):
     if memory_type not in MEMORY_TYPES:
         memory_type = 'Capture'
     mid = str(uuid.uuid4())
@@ -70,8 +70,8 @@ def write_memory(content, memory_type='Capture', salience=0.6):
             with _neo4j.session() as s:
                 s.run(
                     'CREATE (m:Memory {id:$id, content:$content, type:$type, '
-                    'salience:$salience, created_at:$now, last_accessed:$now, access_count:0})',
-                    id=mid, content=content, type=memory_type, salience=salience, now=now
+                    'salience:$salience, created_at:$now, last_accessed:$now, access_count:0, user_id:$uid})',
+                    id=mid, content=content, type=memory_type, salience=salience, now=now, uid=user_id
                 )
         except Exception as e:
             print('[memory] neo4j write error:', e)
@@ -81,7 +81,7 @@ def write_memory(content, memory_type='Capture', salience=0.6):
             from qdrant_client.models import PointStruct
             _qdrant.upsert(COLLECTION, points=[PointStruct(
                 id=mid, vector=vec,
-                payload={'content': content, 'type': memory_type, 'salience': salience, 'created_at': now}
+                payload={'content': content, 'type': memory_type, 'salience': salience, 'created_at': now, 'user_id': user_id}
             )])
         except Exception as e:
             print('[memory] qdrant write error:', e)
@@ -89,15 +89,16 @@ def write_memory(content, memory_type='Capture', salience=0.6):
     return mid
 
 
-def recall_memories(query, top_k=6, memory_type=None):
+def recall_memories(query, top_k=6, memory_type=None, user_id='jas_personal'):
     if not _qdrant_ok:
         return []
     try:
         from qdrant_client.models import Filter, FieldCondition, MatchValue
         vec  = _vec(query)
-        filt = None
+        must_conditions = [FieldCondition(key='user_id', match=MatchValue(value=user_id))]
         if memory_type:
-            filt = Filter(must=[FieldCondition(key='type', match=MatchValue(value=memory_type))])
+            must_conditions.append(FieldCondition(key='type', match=MatchValue(value=memory_type)))
+        filt = Filter(must=must_conditions)
         results = _qdrant.query_points(
             COLLECTION, query=vec, limit=top_k,
             with_payload=True, score_threshold=0.28, query_filter=filt, with_vectors=False

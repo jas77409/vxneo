@@ -72,7 +72,7 @@ async def message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.chat.send_action('typing')
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            r = await client.post(f'{NEO_API}/ask', json={'text': text})
+            r = await client.post(f'{NEO_API}/ask', json={'text': text, 'user_id': str(update.effective_user.id)})
         result = r.json()
         mode     = result.get('mode', 'Neo')
         response = result.get('response', 'No response.')
@@ -82,6 +82,31 @@ async def message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                          'mode': mode, 'input_len': len(text)})
     except Exception as e:
         await update.message.reply_text(f"Try again in a moment. ({e})")
+
+
+async def cmd_model(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    import sys as _s; _s.path.insert(0,'/root/companion/agent')
+    from routing.model_router import list_models, get_default, set_default
+    args = ctx.args
+    if not args:
+        current = get_default()
+        lines = [f"Active model: *{current}*", ""]
+        for m in list_models():
+            if m['available']:
+                mark = "▶" if m['key']==current else "  "
+                cost = f"${m['cost']}/1M" if m['cost']>0 else "free"
+                lines.append(f"{mark} `{m['key']}` — {m['label']} ({cost})")
+        lines.append("")
+        lines.append("Switch: /model deepseek-hf")
+        await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    else:
+        key = args[0].strip()
+        avail = {m['key']:m for m in list_models() if m['available']}
+        if key not in avail:
+            await update.message.reply_text(f"Unknown or unavailable model: {key}")
+            return
+        set_default(key)
+        await update.message.reply_text(f"Switched to *{avail[key]['label']}*", parse_mode="Markdown")
 
 def main():
     token = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -95,6 +120,7 @@ def main():
     app.add_handler(CommandHandler('status',   status))
     app.add_handler(CommandHandler('remember', remember))
     app.add_handler(CommandHandler('recall',   recall))
+    app.add_handler(CommandHandler('model', cmd_model))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message))
 
     print('[telegram] Neo bot polling...')

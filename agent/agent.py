@@ -30,6 +30,7 @@ except ImportError:
     def route(text, context=None): return {'task_type':'conversation','message':None}
 
 class AgentState(TypedDict):
+    user_id: str
     input: str
     mode: str
     memory_context: str
@@ -92,7 +93,7 @@ def _store(state):
     try:
         import memory_manager
         if not state.get('routed'):
-            memory_manager.write_memory(state['input'], 'Episodic', 0.5)
+            memory_manager.write_memory(state['input'], 'Episodic', 0.5, user_id=state.get('user_id','jas_personal'))
         mode_label = state.get('mode','default')
         if mode_label == 'default': mode_label = 'Neo'
         _r.set('agent_state',    'responded:' + mode_label)
@@ -140,7 +141,7 @@ companion = _g.compile()
 def ask(text):
     result = companion.invoke({
         'input':text,'mode':'','memory_context':'',
-        'response':'','task_type':'','routed':False,
+        'response':'','task_type':'','routed':False,'user_id':'jas_personal',
     })
     mode_label = result.get('mode','default')
     if mode_label == 'default': mode_label = 'Neo'
