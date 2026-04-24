@@ -190,7 +190,7 @@ The Neo Android app is built with Flutter.
 - [x] GitHub tools + shell access
 - [x] Microsoft + Google Calendar
 - [x] Stripe billing
-- [x] ULANZI pixel desk display service
+- [x] Raspberry pi display service
 - [ ] Trello integration
 - [ ] iOS app
 - [ ] One-click Docker deploy script
