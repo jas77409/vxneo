@@ -1,22 +1,17 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum VoiceState {
-  idle,
-  listening,
-  detected,
-  recording,
-  processing,
-  responding,
-  error,
+  idle, listening, detected, recording, processing, responding, error,
 }
 
 class NeoVoiceService extends ChangeNotifier {
-  static const String _neoApiUrl = 'https://vxneo.com/ask/smart';
+  static const String _baseUrl = 'https://vxneo.com';
 
   final SpeechToText _stt = SpeechToText();
   bool _sttReady = false;
@@ -31,6 +26,11 @@ class NeoVoiceService extends ChangeNotifier {
   String get errorMessage   => _errorMessage;
   bool get isListening      => _state == VoiceState.listening;
   bool get isActive         => _state != VoiceState.idle;
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('neo_token');
+  }
 
   Future<bool> init() async {
     final status = await Permission.microphone.request();
@@ -66,8 +66,7 @@ class NeoVoiceService extends ChangeNotifier {
       cancelOnError: false,
       partialResults: true,
       listenFor: const Duration(seconds: 60),
-      pauseFor: const Duration(seconds: 3),
-      onSoundLevelChange: null,
+      pauseFor: const Duration(seconds: 8),
     );
   }
 
@@ -92,7 +91,7 @@ class NeoVoiceService extends ChangeNotifier {
         }
       },
       listenFor: const Duration(seconds: 8),
-      pauseFor: const Duration(seconds: 2),
+      pauseFor: const Duration(seconds: 3),
       partialResults: true,
       cancelOnError: false,
     );
@@ -115,9 +114,15 @@ class NeoVoiceService extends ChangeNotifier {
     debugPrint('[Neo] Sending: $text');
 
     try {
+      final token = await _getToken();
+      final headers = {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
       final response = await http.post(
-        Uri.parse(_neoApiUrl),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$_baseUrl/neo/ask'),
+        headers: headers,
         body: jsonEncode({'text': text, 'user_id': userId, 'voice': true}),
       ).timeout(const Duration(seconds: 20));
 
@@ -128,6 +133,8 @@ class NeoVoiceService extends ChangeNotifier {
         Future.delayed(const Duration(seconds: 6), () {
           if (_state == VoiceState.responding) _setState(VoiceState.idle);
         });
+      } else if (response.statusCode == 401) {
+        _setError('Please log in to use voice commands.');
       } else {
         _setError('Neo error ${response.statusCode}. Try again.');
       }
@@ -183,6 +190,3 @@ class NeoVoiceService extends ChangeNotifier {
     super.dispose();
   }
 }
-
-
-
