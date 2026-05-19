@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<key>NSMicrophoneUsageDescription</key>
+<string>Neo uses your microphone to listen for the Hey Neo wake word and to process your voice commands.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Neo uses speech recognition to convert your voice commands into text so it can understand and respond to you.</string>
+<key>NSCameraUsageDescription</key>
+<string>Neo may use the camera for future features.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -28,13 +34,31 @@
 	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+<key>NSMicrophoneUsageDescription</key>
+<string>Neo uses your microphone to listen for the Hey Neo wake word and to process your voice commands.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Neo uses speech recognition to convert your voice commands into text so it can understand and respond to you.</string>
+<key>NSCameraUsageDescription</key>
+<string>Neo may use the camera for future features.</string>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
 		<dict>
+<key>NSMicrophoneUsageDescription</key>
+<string>Neo uses your microphone to listen for the Hey Neo wake word and to process your voice commands.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Neo uses speech recognition to convert your voice commands into text so it can understand and respond to you.</string>
+<key>NSCameraUsageDescription</key>
+<string>Neo may use the camera for future features.</string>
 			<key>UIWindowSceneSessionRoleApplication</key>
 			<array>
 				<dict>
+<key>NSMicrophoneUsageDescription</key>
+<string>Neo uses your microphone to listen for the Hey Neo wake word and to process your voice commands.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Neo uses speech recognition to convert your voice commands into text so it can understand and respond to you.</string>
+<key>NSCameraUsageDescription</key>
+<string>Neo may use the camera for future features.</string>
 					<key>UISceneClassName</key>
 					<string>UIWindowScene</string>
 					<key>UISceneConfigurationName</key>
@@ -68,3 +92,4 @@
 	</array>
 </dict>
 </plist>
+
