@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/chat_provider.dart';
 import '../services/auth_provider.dart';
+import '../services/neo_voice_service.dart';
 import '../models/message.dart';
 import '../utils/theme.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/model_sheet.dart';
+import '../widgets/hey_neo_button.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -14,80 +16,184 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _controller = TextEditingController();
-  final _scroll = ScrollController();
+  final _scroll     = ScrollController();
+  late NeoVoiceService _voice;
 
   @override
   void initState() {
     super.initState();
+    _voice = NeoVoiceService();
+    _voice.init();
+
+    // When Neo responds by voice, also add to chat
+    _voice.addListener(() {
+      if (_voice.state == VoiceState.responding && _voice.neoResponse.isNotEmpty) {
+        final chat = context.read<ChatProvider>();
+        if (_voice.transcript.isNotEmpty) {
+          chat.addVoiceExchange(_voice.transcript, _voice.neoResponse);
+        }
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ChatProvider>().loadModels();
     });
   }
 
   @override
+  void dispose() {
+    _voice.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Consumer<ChatProvider>(
-          builder: (_, chat, __) => GestureDetector(
-            onTap: () => _showModelSheet(context, chat),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text('Neo', style: TextStyle(fontFamily: 'Georgia', color: NeoTheme.white, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: NeoTheme.blue.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: NeoTheme.blue.withOpacity(0.3)),
+    final userId = context.watch<AuthProvider>().userId ?? 'jas_personal';
+
+    return ChangeNotifierProvider.value(
+      value: _voice,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Consumer<ChatProvider>(
+            builder: (_, chat, __) => GestureDetector(
+              onTap: () => _showModelSheet(context, chat),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('Neo', style: TextStyle(
+                  fontFamily: 'Georgia',
+                  color: NeoTheme.white,
+                  fontWeight: FontWeight.w700,
+                )),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: NeoTheme.blue.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: NeoTheme.blue.withOpacity(0.3)),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(chat.currentModel, style: TextStyle(color: NeoTheme.blue, fontSize: 11)),
+                    const SizedBox(width: 4),
+                    Icon(Icons.expand_more, color: NeoTheme.blue, size: 14),
+                  ]),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(chat.currentModel, style: TextStyle(color: NeoTheme.blue, fontSize: 11)),
-                  const SizedBox(width: 4),
-                  Icon(Icons.expand_more, color: NeoTheme.blue, size: 14),
-                ]),
-              ),
-            ]),
+              ]),
+            ),
           ),
+          actions: [
+            // Hey Neo status indicator in app bar
+            Consumer<NeoVoiceService>(
+              builder: (_, voice, __) => voice.isListening
+                ? Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        width: 8, height: 8,
+                        decoration: const BoxDecoration(
+                          color: NeoTheme.blue, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text('Listening',
+                        style: TextStyle(color: NeoTheme.blue, fontSize: 11)),
+                    ]),
+                  )
+                : const SizedBox.shrink(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh_outlined, color: NeoTheme.muted),
+              onPressed: () => context.read<ChatProvider>().clearMessages(),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_outlined, color: NeoTheme.muted),
-            onPressed: () => context.read<ChatProvider>().clearMessages(),
+        body: Column(children: [
+          // Messages list
+          Expanded(
+            child: Consumer<ChatProvider>(
+              builder: (_, chat, __) {
+                if (chat.messages.isEmpty) return _emptyState(userId);
+                WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                return ListView.builder(
+                  controller: _scroll,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  itemCount: chat.messages.length + (chat.loading ? 1 : 0),
+                  itemBuilder: (_, i) {
+                    if (i == chat.messages.length) return const _TypingIndicator();
+                    return MessageBubble(message: chat.messages[i]);
+                  },
+                );
+              },
+            ),
           ),
-        ],
+
+          // Neo voice response card
+          const NeoResponseCard(),
+
+          // Hey Neo button row
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: HeyNeoButton(userId: userId),
+          ),
+
+          // Text input bar
+          _inputBar(),
+        ]),
       ),
-      body: Column(children: [
-        Expanded(
-          child: Consumer<ChatProvider>(
-            builder: (_, chat, __) {
-              if (chat.messages.isEmpty) return _emptyState();
-              WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-              return ListView.builder(
-                controller: _scroll,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: chat.messages.length + (chat.loading ? 1 : 0),
-                itemBuilder: (_, i) {
-                  if (i == chat.messages.length) return const _TypingIndicator();
-                  return MessageBubble(message: chat.messages[i]);
-                },
-              );
-            },
-          ),
-        ),
-        _inputBar(),
-      ]),
     );
   }
 
-  Widget _emptyState() {
+  Widget _emptyState(String userId) {
     final auth = context.watch<AuthProvider>();
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Hey Neo big button in empty state
+        Consumer<NeoVoiceService>(
+          builder: (_, voice, __) => GestureDetector(
+            onTap: () => voice.isListening
+                ? voice.triggerManually(userId: userId)
+                : voice.startListening(userId: userId),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 100, height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: voice.isListening
+                    ? NeoTheme.blue.withOpacity(0.2)
+                    : NeoTheme.bg2,
+                border: Border.all(
+                  color: voice.isListening ? NeoTheme.blue : NeoTheme.border,
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    voice.isListening ? Icons.hearing : Icons.mic_none_outlined,
+                    color: voice.isListening ? NeoTheme.blue : NeoTheme.muted,
+                    size: 36,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    voice.isListening ? 'Listening' : 'Hey Neo',
+                    style: TextStyle(
+                      color: voice.isListening ? NeoTheme.blue : NeoTheme.muted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         Text('Hello, ${auth.userName.split(' ').first}.',
-          style: const TextStyle(fontFamily: 'Georgia', fontSize: 22, color: NeoTheme.white, fontWeight: FontWeight.w600)),
+          style: const TextStyle(
+            fontFamily: 'Georgia', fontSize: 22,
+            color: NeoTheme.white, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        Text('Start with something real.', style: TextStyle(color: NeoTheme.muted, fontSize: 14)),
+        Text('Say "Hey Neo" or tap the mic to start.',
+          style: TextStyle(color: NeoTheme.muted, fontSize: 14)),
         const SizedBox(height: 32),
         ...[
           'What has been on my mind lately?',
@@ -103,7 +209,8 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: NeoTheme.border),
             ),
-            child: Text(hint, style: const TextStyle(color: NeoTheme.textSecondary, fontSize: 13)),
+            child: Text(hint,
+              style: const TextStyle(color: NeoTheme.textSecondary, fontSize: 13)),
           ),
         )),
       ]),
@@ -124,7 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
             minLines: 1, maxLines: 5,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              hintText: 'Talk to Neo...',
+              hintText: 'Or type to Neo...',
               hintStyle: TextStyle(color: NeoTheme.muted, fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               isDense: true,
@@ -144,7 +251,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: chat.loading
-                ? const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
+                ? const Center(child: SizedBox(width: 18, height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
                 : const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
             ),
           ),
@@ -170,7 +278,8 @@ class _ChatScreenState extends State<ChatScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: NeoTheme.bg2,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => ModelSheet(chat: chat),
     );
   }
@@ -186,12 +295,17 @@ class _TypingIndicator extends StatelessWidget {
         Container(
           width: 32, height: 32,
           decoration: BoxDecoration(color: NeoTheme.blue, borderRadius: BorderRadius.circular(16)),
-          child: const Center(child: Text('N', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14))),
+          child: const Center(child: Text('N',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14))),
         ),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(color: NeoTheme.bg2, borderRadius: BorderRadius.circular(16), border: Border.all(color: NeoTheme.border)),
+          decoration: BoxDecoration(
+            color: NeoTheme.bg2,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: NeoTheme.border),
+          ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             _Dot(delay: 0), const SizedBox(width: 4),
             _Dot(delay: 200), const SizedBox(width: 4),
@@ -229,6 +343,8 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) => FadeTransition(
     opacity: _opacity,
-    child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: NeoTheme.muted, shape: BoxShape.circle)),
+    child: Container(
+      width: 6, height: 6,
+      decoration: const BoxDecoration(color: NeoTheme.muted, shape: BoxShape.circle)),
   );
 }

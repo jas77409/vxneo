@@ -1,7 +1,7 @@
 name: neo_companion
 description: Neo — Personal Companion Intelligence by VXNeo Labs
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.5+6
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -36,6 +36,11 @@ dependencies:
   uuid: ^4.3.3
   url_launcher: ^6.2.4
   package_info_plus: ^9.0.1
+  porcupine_flutter: ^4.0.0
+  speech_to_text: ^7.3.0
+  permission_handler: ^12.0.1
+  just_audio: ^0.10.5
+  record: ^6.2.0
 
 dev_dependencies:
   flutter_test:
@@ -46,3 +51,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+
+
+

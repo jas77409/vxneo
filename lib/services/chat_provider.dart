@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/message.dart';
 
@@ -6,12 +6,19 @@ class ChatProvider extends ChangeNotifier {
   final List<Message> _messages = [];
   bool _loading = false;
   String _currentModel = 'claude';
+  String _userId = 'jas_personal';
   List<Map<String, dynamic>> _availableModels = [];
 
-  List<Message> get messages => _messages;
-  bool get loading => _loading;
-  String get currentModel => _currentModel;
+  List<Message> get messages        => _messages;
+  bool get loading                  => _loading;
+  String get currentModel           => _currentModel;
+  String get userId                 => _userId;
   List<Map<String, dynamic>> get availableModels => _availableModels;
+
+  void setUserId(String id) {
+    _userId = id;
+    notifyListeners();
+  }
 
   Future<void> loadModels() async {
     try {
@@ -30,7 +37,6 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
-
     _messages.add(Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text, isUser: true,
@@ -38,12 +44,10 @@ class ChatProvider extends ChangeNotifier {
     ));
     _loading = true;
     notifyListeners();
-
     try {
-      final data = await ApiService.sendMessage(text);
+      final data = await ApiService.sendMessage(text, userId: _userId);
       final response = data['response'] as String? ?? 'No response.';
-      final mode = data['mode'] as String? ?? '';
-
+      final mode     = data['mode'] as String? ?? '';
       _messages.add(Message(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         text: response, isUser: false,
@@ -59,6 +63,22 @@ class ChatProvider extends ChangeNotifier {
       ));
     }
     _loading = false;
+    notifyListeners();
+  }
+
+  // Called when voice exchange completes — adds to chat history
+  void addVoiceExchange(String userText, String neoResponse) {
+    _messages.add(Message(
+      id: '${DateTime.now().millisecondsSinceEpoch}_u',
+      text: userText, isUser: true,
+      timestamp: DateTime.now(),
+    ));
+    _messages.add(Message(
+      id: '${DateTime.now().millisecondsSinceEpoch}_n',
+      text: neoResponse, isUser: false,
+      timestamp: DateTime.now(),
+      mode: 'voice',
+    ));
     notifyListeners();
   }
 

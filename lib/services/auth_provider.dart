@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -13,6 +13,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
   String get userName => _user?['name'] ?? 'Neo';
   String get userTier => _user?['tier'] ?? 'free';
+  String get userId => _user?['user_id'] ?? _user?['id'] ?? 'jas_personal';
 
   Future<void> init() async {
     _user = await ApiService.getUser();
@@ -27,11 +28,7 @@ class AuthProvider extends ChangeNotifier {
         _user = data;
         try {
           final fcmToken = await FirebaseMessaging.instance.getToken();
-          print('[FCM] token: ' + (fcmToken ?? 'NULL'));
-          if (fcmToken != null) {
-            await ApiService.registerFCMToken(fcmToken);
-            print('[FCM] registered ok');
-          }
+          if (fcmToken != null) await ApiService.registerFCMToken(fcmToken);
         } catch (e) { print('[FCM] error: ' + e.toString()); }
         _loading = false; notifyListeners(); return true;
       }
@@ -68,5 +65,3 @@ class AuthProvider extends ChangeNotifier {
 
   void clearError() { _error = null; notifyListeners(); }
 }
-
-

@@ -91,14 +91,14 @@ class ApiService {
 
   // ── Chat ──────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> sendMessage(String text) async {
+  static Future<Map<String, dynamic>> sendMessage(String text, {String? userId}) async {
     final user = await getUser();
     final userId = user?['user_id'] ?? 'anon';
 
     final r = await http.post(
       Uri.parse('$baseUrl/neo/ask'),
       headers: await headers(),
-      body: jsonEncode({'text': text, 'user_id': userId}),
+      body: jsonEncode({'text': text, 'user_id': userId ?? 'jas_personal'}),
     ).timeout(timeout);
 
     if (r.statusCode == 200) {
@@ -195,6 +195,8 @@ class ApiService {
     }
   }
 }
+
+
 
 
 
