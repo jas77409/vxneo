@@ -1,7 +1,7 @@
 name: neo_companion
 description: Neo — Personal Companion Intelligence by VXNeo Labs
 publish_to: 'none'
-version: 1.0.8+9
+version: 1.0.8+13
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -54,6 +54,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+
 
 
 
