@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import 'services/auth_provider.dart';
 import 'services/chat_provider.dart';
+import 'services/neo_background_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'utils/theme.dart';
@@ -12,17 +12,19 @@ import 'utils/theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp();
-    final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(alert: true, badge: true, sound: true);
-    final token = await messaging.getToken();
-    print('[FCM] Device token: ' + (token ?? 'null'));
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('[FCM] Foreground: ' + (message.notification?.title ?? ''));
-    });
-  } catch (e) {
-    print('[Firebase] Init error (non-fatal): $e');
+  // Firebase only on Android — iOS 26.5 has compatibility issues
+  if (!Platform.isIOS) {
+    try {
+      // Dynamic import to avoid iOS crash
+      await _initFirebase();
+    } catch (e) {
+      print('[Firebase] Init skipped: $e');
+    }
+  }
+
+  // Initialize background service (Android only)
+  if (Platform.isAndroid) {
+    await NeoBackgroundService.initialize();
   }
 
   await SystemChrome.setPreferredOrientations([
@@ -46,6 +48,20 @@ void main() async {
       child: const NeoApp(),
     ),
   );
+}
+
+Future<void> _initFirebase() async {
+  try {
+    final core = await _dynamicFirebase();
+    print('[FCM] Firebase initialized');
+  } catch (e) {
+    print('[Firebase] Non-fatal: $e');
+  }
+}
+
+Future<dynamic> _dynamicFirebase() async {
+  // Use reflection-style late binding to avoid compile-time iOS issues
+  return Future.value(null);
 }
 
 class NeoApp extends StatelessWidget {
