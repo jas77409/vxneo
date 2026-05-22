@@ -67,10 +67,16 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
-				</dict>
+				<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
 			</array>
-		</dict>
-	</dict>
+		<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -90,6 +96,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
+
 
