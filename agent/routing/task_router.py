@@ -113,6 +113,10 @@ def handle_calendar(text):
             'message': 'Noted as an intention: ' + text[:100]}
 
 def route(text, context=None):
+    # PROAS check first
+    proas_result = route_proas(text)
+    if proas_result:
+        return {'task_type': 'proas', 'success': True, 'message': proas_result}
     task_type, confidence = classify_task(text)
     _r.lpush('router_log', json.dumps({'task_type': task_type, 'confidence': round(confidence,2),
                                         'ts': datetime.now().isoformat()}))
@@ -221,3 +225,74 @@ def handle_shell(text):
         return {'task_type':'shell','success':False,'message':'Specify what to check: neo, telegram, disk, memory, uptime'}
     except Exception as e:
         return {'task_type':'shell','success':False,'message':f'Shell error: {e}'}
+
+def route_proas(text):
+    """PROAS Management System routing"""
+    text_lower = text.lower()
+    proas_keywords = [
+        'proas', 'client', 'erika', 'timesheet', 'log hours',
+        'add hours', 'employee', 'mia', 'nilufa', 'manifa', 'mohammed',
+        'fsw', 'pflegegeld', 'billing summary', 'monthly summary',
+        'missing data', 'assistenz', 'max mustermann'
+    ]
+    if not any(k in text_lower for k in proas_keywords):
+        return None
+
+    import sys
+    sys.path.insert(0, '/root/companion/agent/tools')
+    from proas_tools import (get_clients, get_employees, get_timesheets,
+                              get_monthly_summary, check_missing_data)
+
+    if any(k in text_lower for k in ['client', 'erika', 'who are the client']):
+        result = get_clients()
+        clients = result.get('clients', [])
+        if not clients:
+            return 'No active clients found in PROAS system.'
+        lines = [f'PROAS has {len(clients)} active client(s):']
+        for c in clients:
+            lines.append(f"• {c['Full_Name']} ({c['Client_ID']}) — Pflegegeld Stufe {c.get('Pflegegeld_Stufe','?')}, FSW max €{c.get('Max_Amount_Month','?')}/month, Needs: {c.get('Disability_Needs','?')}")
+        return '\n'.join(lines)
+
+    elif any(k in text_lower for k in ['employee', 'staff', 'mia', 'nilufa', 'manifa', 'mohammed', 'max mustermann']):
+        result = get_employees()
+        emps = result.get('employees', [])
+        lines = [f'PROAS has {len(emps)} employee(s):']
+        for e in emps:
+            lines.append(f"• {e['Full_Name']} ({e['Employee_ID']}) — €{e.get('Hourly_Pay_Rate','?')}/hr")
+        return '\n'.join(lines)
+
+    elif any(k in text_lower for k in ['missing', 'incomplete']):
+        result = check_missing_data()
+        issues = result.get('issues', [])
+        if not issues:
+            return 'No missing data found in PROAS system.'
+        return f"Missing data ({len(issues)} issues):\n" + '\n'.join(f'• {i}' for i in issues)
+
+    elif any(k in text_lower for k in ['summary', 'billing', 'monthly', 'revenue']):
+        result = get_monthly_summary()
+        summaries = result.get('summaries', [])
+        if not summaries:
+            return f"No timesheet entries for {result.get('month')}/{result.get('year')}."
+        lines = [f"Monthly summary — {result.get('month')}/{result.get('year')}:"]
+        for s in summaries:
+            alert = ' ⚠️ NEAR FSW LIMIT' if s.get('fsw_alert') else ''
+            lines.append(f"• {s['client_name']}: {s['total_hours']}h, €{s['total_revenue']:.2f} ({s.get('fsw_used_pct',0)}% of FSW limit){alert}")
+        lines.append(f"Total: {result['total_hours']}h, €{result['total_revenue']:.2f}")
+        return '\n'.join(lines)
+
+    elif any(k in text_lower for k in ['timesheet', 'log hours', 'add hours']):
+        result = get_timesheets()
+        ts = result.get('timesheets', [])
+        if not ts:
+            return 'No timesheet entries found.'
+        lines = [f'Recent timesheets ({len(ts)} entries):']
+        for t in ts[-5:]:
+            d = str(t.get('Date',''))[:10]
+            lines.append(f"• {d} — {t.get('Employee_ID')} with {t.get('Client_ID')}: {t.get('Hours_Worked')}h ({t.get('Service_Type')}) — €{t.get('Revenue','?')}")
+        return '\n'.join(lines)
+
+    else:
+        result = get_monthly_summary()
+        clients = get_clients().get('clients', [])
+        missing = check_missing_data().get('issues', [])
+        return f"PROAS System Status:\n• Active clients: {len(clients)}\n• This month revenue: €{result['total_revenue']:.2f}\n• Total hours: {result['total_hours']}h\n• Data issues: {len(missing)}"
