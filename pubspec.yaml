@@ -1,7 +1,7 @@
 name: neo_companion
 description: Neo — Personal Companion Intelligence by VXNeo Labs
 publish_to: 'none'
-version: 1.0.8+13
+version: 1.0.9+15
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
