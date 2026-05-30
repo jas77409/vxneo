@@ -1,168 +1,289 @@
-# CLAUDE.md
+CLAUDE.md — VXNeo Labs Complete Project Context
+Last updated: May 2026 | Compiled from full project history
+Claude Code reads this automatically at the start of every session.
+When something major changes, update this file (ask Claude Code or edit directly).
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+What This Project Is
+Neo is a privacy-first voice AI companion for people with disabilities, deployed as a
+self-contained Raspberry Pi 5 at the client's home. It wakes on voice, speaks naturally,
+detects falls on-chip, tracks health daily, reads emails aloud, and remembers every client
+permanently via a 9-dimensional Neo4j graph memory.
+Live deployment: PROAS Vienna, Austria · 2 clients · First client Amrit since Feb 2026
+Revenue: CAD $1,000/month per care org · Contract signed · GDPR DPA signed
+There are TWO codebases:
 
-## What This Is
+/root/companion/ — live production server (this repo)
+/root/companion/vxneo/ — open-source distribution copy (separate git repo, Apache 2.0)
 
-Neo is a self-hosted personal companion intelligence platform. It builds a persistent memory graph of the user's life across 9 dimensions (Goals, Habits, Health, Relationships, Work, Events, Emotions, Preferences, Context) and uses it to respond contextually via a LangGraph agent pipeline.
+Changes to production are NOT automatically mirrored to vxneo/
 
-There are **two codebases** in this repo:
-- `/root/companion/` — the live production deployment (this repo root)
-- `/root/companion/vxneo/` — a separate git repo (the open-source distribution copy, tracked independently)
+Hardware — Raspberry Pi 5 (Client Home)
 
-Changes to production code in the root are **not** automatically mirrored to `vxneo/`.
+Case/Kit:  Pironman 5 Pro Max Kit (SunFounder)
+CPU:       Raspberry Pi 5 — 8GB RAM — ARM Cortex-A76
+Camera:    Raspberry Pi AI Camera (Sony IMX500) — integrated — on-chip PoseNet
+Display:   0.96" OLED on Pironman front panel — driven by neo_display.py
+Audio:     USB PnP Sound Device (MIC_INDEX=4 in systemd)
+Storage:   NVMe SSD via M.2 slot in Pironman
+Note: "Raspberry Pi AI Camera" IS the Sony IMX500 — same chip, official RPi packaging.
+Code references to AITRIOS IMX500 and PoseNet remain correct.
 
----
 
-## Running the Stack
+Infrastructure — All Servers & Access
+Hetzner VPS (Primary Server)
 
-**Infrastructure (Docker):**
-```bash
-docker compose up -d          # start Neo4j, Qdrant, Redis, Redis Commander
-docker compose ps             # verify all 4 services are up
-docker compose logs neo4j     # check a specific service
-```
+IP / SSH:  root@204.168.170.174
+OS:        Ubuntu 22.04 LTS, 4GB RAM, Helsinki
+Companion code: /root/companion/
+Neo4j password (live): companion_2026
+Ghost blog: /var/www/ghost/ (run as ghostuser) — https://blog.vxneo.com/ghost
+Ghost Content API Key: 065df050372b429ae37b9f0822
 
-**API server:**
-```bash
-cd /root/companion
+Raspberry Pi 5 (Edge Device)
+
+SSH:       neo@192.168.0.48 or neo@neo-pi.local
+Remote:    connect.raspberrypi.com (device: neo)
+Pi code:   /home/neo/vxneo/
+User:      neo (not root)
+OS:        Raspberry Pi OS Lite 64-bit — headless
+
+Developer Machines (Tailscale VPN)
+
+Jas office PC:  100.95.38.100:9000
+Amrit home PC:  100.94.15.109:9000
+Flutter project: C:\Users\Info\Documents\neo_official (branch: flutter-app)
+Local vxneo repo: C:\Users\jaspa\vxneo
+Android keystore: C:\Users\Info\Documents\neo-release-key.jks (alias: neo)
+
+VS Code SSH config (~/.ssh/config)
+Host vxneo-hetzner
+    HostName 204.168.170.174
+    User root
+    IdentityFile C:\Users\Info\.ssh\id_ed25519
+    StrictHostKeyChecking no
+    ServerAliveInterval 60
+VS Code Remote SSH needs the FULL Windows path to the key (~ fails).
+Open the LOCAL folder (code C:\Users\jaspa\vxneo), never the GitHub virtual
+filesystem (vscode-vfs://) — Claude Code cannot run on virtual workspaces.
+Always activate venv first
+bash# Pi
+source /home/neo/vxneo/venv/bin/activate && cd /home/neo/vxneo
+# Hetzner
+source /root/companion/venv/bin/activate && cd /root/companion
+
+Raspberry Pi — All 6 Systemd Services
+bashsudo systemctl status neo-api neo-wake neo-fall neo-alerts neo-scheduler neo-emotion --no-pager
+sudo systemctl restart neo-wake
+sudo journalctl -u neo-wake -f
+sudo systemctl daemon-reload    # after editing any .service file
+ServiceFunctionDescriptionneo-apiFastAPI :800028+ endpoints — Neo4j + Qdrant + Redisneo-wakeWake wordPorcupine + pvrecorder · MIC_INDEX=4 · Hey Neoneo-fallFall detectionAITRIOS IMX500 PoseNet → Telegram alertneo-alertsAlert routingReads Redis neo_alerts → Piper TTS → speakerneo-schedulerRemindersAPScheduler · medicine 08:00+20:00 · check-in 08:30neo-emotionEmotion sensingCamera scene inference → Redis emotion_state
+CRITICAL service fix — neo-wake.service
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Without this, pvrecorder CANNOT see the USB mic in systemd context (pipewire
+blocks device enumeration). Known production bug — keep it in the file.
+Docker Compose (Hetzner)
+bashdocker compose up -d        # Neo4j, Qdrant, Redis, Redis Commander
+docker compose ps
+
+Wake Word System — wake_word.py
+SettingValueWake word"Hey Neo" — custom Porcupine (hey_neo.ppn)Porcupine keyG8tVxojA2IcKWBmC6oCMe3TYHaDER3qP1hVyOB13hpLdgs9qyF1WzA==MIC_INDEX4 (USB PnP in systemd) · 0 (interactive/manual)Sensitivity0.9 · Sample rate 16000 HzVolume boostnp.clip(samples * 10, -32767, 32767) — 10xSilence skipRMS < 800 → skip transcriptionTTSPiper en_US-lessac-medium.onnx · fallback espeak-ngBackupagent/wake_word_v2_working.py — golden copy
+python_PC_MAP = {
+    'prime_amrit_001': 'http://100.94.15.109:9000/command',
+    'jas_personal':    'http://100.95.38.100:9000/command',
+}
+_ACTIVE_USER = 'jas_personal'   # MUST change to prime_amrit_001 at Amrit's home
+
+Audio Pipeline
+
+pvrecorder 16000Hz → 10x numpy boost → noisereduce (prop_decrease=0.85) → RMS check → Whisper
+Whisper tiny (English) → Whisper base (German) — auto language detection
+Austrian German vocab: /home/neo/vxneo/data/austrian_hints.json
+NEVER share pvrecorder + arecord in same thread → segfault. Use pvrecorder on Pi 5.
+
+
+Key API Endpoints (28+ on FastAPI)
+MethodEndpointDescriptionPOST/askMain conversation · user_id requiredPOST/ask/smartMulti-model router (current production)POST/ask/v2NEW 3-tier router (neo_model_router.py) — wire pendingPOST/neo/askMobile app endpoint (Bearer token)GET/healthHealth checkPOST/prime/enrollEnroll Prime Program clientGET/prime/clientsList enrolled clientsGET/memory/recentRecent memoriesGET/memory/search?q=Semantic memory searchPOST/memory/addAdd memory nodeDELETE/memory/deleteGDPR Art.17 deletionGET/camera/stateFall detection + emotionPOST/alertTrigger coordinator alertPOST/scheduler/addAdd appointment/reminderGET/modelsList modelsPOST/models/setSwitch active model (Redis)GET/proas/clientsPROAS case managementGET/ws/screenWebSocket screen state
+
+Client Profiles
+Amrit Singh — Live Client + Co-Founder of PROAS partnership
+user_id:     prime_amrit_001
+condition:   Mobility impairment — daily companion support
+coordinator: Amandeep · location: Vienna · language: English
+enrolled:    February 2026
+PC Tailscale: http://100.94.15.109:9000/command
+Note: Amrit is co-founder of the PROAS-VXNeo partnership (NOT co-owner of VXNeo Labs Inc.)
+Jas (Founder)
+user_id: jas_personal · PC: http://100.95.38.100:9000/command
+Neo4j multi-tenant: all nodes isolated by user_id.
+
+9-Dimensional Memory Architecture
+Episodic · Health · Medication · Emotional · Social · Preference · Schedule ·
+Contextual · Semantic (+ Procedural for success-chain learning)
+
+Salience: decays ×0.99 nightly · boosts +0.05 on recall
+Vectors: all-MiniLM-L6-v2 (384-dim) in Qdrant · top-6 injected per call
+
+Agent Pipeline (LangGraph StateGraph)
+security → router → classify → recall → respond → store
+                  ↘ tool handler (bypasses LLM) ↗
+PROAS check runs FIRST — before general task classification.
+
+3-Tier Model Router (neo_model_router.py)
+TIER 1 — ON-DEVICE (Ollama on Pi): Mistral 7B Q4, Phi-3 Mini, Llama 3.2 3B — €0
+TIER 2 — EU CLOUD: Mistral API (FR), Qwen 3 72B, DeepSeek V4, Cohere
+TIER 3 — SAFETY NET: Claude Haiku → Claude Sonnet (critical care only)
+Safety rules — NEVER overridden:
+
+Fall detected → Claude only
+Pain score ≥ 8 → Claude minimum
+Mood score ≤ 2 → Claude minimum
+Crisis keywords (EN + DE) → Claude + coordinator alert
+
+Cost ~€14/mo at 20 clients vs ~€90 all-Claude. All Tier 1/2 models open-weights →
+self-hostable via vLLM on future GPU server (change TOGETHER_BASE_URL).
+
+Redis Key Conventions
+KeyPurposeneo:model:defaultActive model keyneo:instinctsLearned patterns (hash, expire 30d)neo:session:turns/context/milestonesStrategic compactionneo_alertsAlert queue read by neo-alerts serviceemotion_stateCurrent emotion (TTL 60s)router_log / security_warningsRolling logs (last 100)
+
+Flutter Mobile App
+SettingValueProjectC:\Users\Info\Documents\neo_official (branch: flutter-app)Android packagecom.vxneolabs.neo_companion (Google Play — LIVE)iOS bundlecom.vxneolabs.neoCompanion (App Store)Current version1.0.9+15App Store ID6768433086 · Team ID 5C3T3UFBFK · jaybpangli@gmail.comiOS deploymentIPHONEOS_DEPLOYMENT_TARGET = 16.0API endpointhttps://vxneo.com/neo/ask (Bearer, SharedPreferences key: neo_token)iOS CICodemagic — builds on push to flutter-app branchAndroid keystoreC:\Users\Info\Documents\neo-release-key.jks (alias: neo)
+Build commands (Windows PowerShell)
+powershellflutter build appbundle --release --no-tree-shake-icons   # Android — local only
+flutter clean ; flutter pub get
+# Version in pubspec.yaml: version: 1.0.9+15 (number after + = build number)
+git push origin flutter-app    # triggers Codemagic iOS build
+iOS Critical Fixes (LEARNED — do not regress)
+
+Info.plist UIApplicationSceneManifest must have CLEAN structure — NO duplicated
+keys. Duplicated usage-description keys nested in scene dicts caused
+NSInvalidArgumentException (-[__NSCFString count]) crash on iPad launch (iPadOS 26.5).
+Fixed in 1.0.9+15. All usage descriptions + ITSAppUsesNonExemptEncryption at TOP
+LEVEL once. UIWindowSceneSessionRoleApplication must be an array → single dict.
+SceneDelegate.swift must exist (manifest references $(PRODUCT_MODULE_NAME).SceneDelegate)
+AppDelegate.swift — safe plugin registration
+ITSAppUsesNonExemptEncryption = false
+porcupine_flutter requires iOS deployment target 16.0
+Many audio plugins compete for mic/audio session (porcupine_flutter, speech_to_text,
+just_audio, record, flutter_foreground_task, flutter_background_service).
+If launch crashes recur, audio session conflict is the next suspect.
+
+App Store Connect rules (LEARNED)
+
+NEVER reuse a build number already uploaded — App Store reserves every uploaded
+number even from rejected builds. Each upload needs a strictly HIGHER number.
+Match the App Store version field to the build's CFBundleShortVersionString.
+Codemagic auto-trigger may not fire — start builds manually if needed
+(codemagic.io → neo_companion → Start new build → branch flutter-app).
+Build Android locally (keystore on Windows), iOS via Codemagic.
+
+
+Integrations
+IntegrationFileAuthGmailagent/tools/google_tools.pyOAuth google_token.jsonGoogle Calendaragent/tools/google_tools.pysame tokenMicrosoft Calendaragent/tools/ms_tools.pyms_token.jsonTelegram Bottelegram_bot.pytelegram.envFirebase FCMfirebase-adminsdk.jsonservice accountPROAS case mgmtagent/tools/proas_tools.pyGoogle Drive — PROAS_FILE_ID in .envGitHubagent/tools/github_tools.pyGITHUB_TOKEN in .envNotionagent/tools/notion_tools.pyNOTION_TOKEN in .envObsidian vaultagent/tools/obsidian_tools.py/root/vault/Ghost CMSGhost Content APIblog.vxneo.comBrevo SMTPBrevo API9eadc5001@smtp-brevo.com
+Google OAuth
+
+Token: /root/companion/google_token.json (gitignored — NEVER commit)
+Re-auth: python3 reauth.py (interactive OAuth flow)
+
+
+GitHub
+
+Repo: github.com/jas77409/vxneo (Apache 2.0)
+Two separate repos: companion/ and companion/vxneo/ — push each independently
+PAT auth: git remote set-url origin https://TOKEN@github.com/jas77409/vxneo.git
+Save creds: git config --global credential.helper store
+Identity: git config --global user.email "jaybpangli@gmail.com"
+Before push: git pull origin main --rebase
+"Neo/Matrix" = Telegram bot + Pironman OLED display (neo_display.py), NOT Matrix protocol.
+
+
+Known Issues & Fixes (LEARNED)
+IssueFixpvrecorder segfaultDelete pvrecorder + porcupine BEFORE conversation loop. Never share with arecord.USB mic inaudible10x numpy boost. RMS check skips silence.systemd audio deviceXDG_RUNTIME_DIR=/run/user/1000 in neo-wake.serviceiOS launch crash (iPad)Clean Info.plist scene manifest — no duplicated keys. Fixed 1.0.9+15.Duplicate build numberAlways bump build number higher; never reuse an uploaded number.Whisper hallucinationSkip transcription if RMS < 800 (TTS echo).AP isolation (router)Use Tailscale VPN — Pi↔PC over 100.x IPs.German mishearingAuto-detect language. Use austrian_hints.json.MIC index wrongMIC_INDEX=4 systemd, 0 interactive.Codemagic debug AABBuild Android locally with --release.VS Code virtual FS errorOpen LOCAL folder (code C:\Users\jaspa\vxneo), not vscode-vfs://Claude Code wrong accountClear ~/.claude.json, re-login.
+
+Best Practices (CRITICAL — do not regress)
+
+Always activate venv before running Python
+MIC_INDEX=4 systemd · 0 interactive
+XDG_RUNTIME_DIR mandatory in neo-wake.service
+Never share pvrecorder + arecord in same thread
+Build Android locally, iOS via Codemagic
+Never commit .env, google_token.json, ms_token.json
+PROAS_FILE_ID in .env — never hardcode Google Drive IDs
+All Pi paths absolute (/home/neo/vxneo/...) — set via sed when moving from /root/companion
+_ACTIVE_USER in wake_word.py MUST match deployment location
+Never reuse an App Store build number
+Clean Info.plist — no duplicated keys, valid scene manifest
+Flutter version in pubspec.yaml controls build number (after +)
+Piper TTS fallback: always espeak-ng as backup
+Pi Connect for remote access — no VPN needed
+Open LOCAL folder in VS Code, never the GitHub virtual filesystem
+
+
+Business & Company Context
+Company Structure (May 2026)
+
+VXNeo Labs Inc. — Ontario, Canada (parent, IP owner, IRAP/SR&ED eligible)
+VXNeo Labs BV — Netherlands (EU HoldCo, Ananda Impact Ventures vehicle)
+VXNeo Labs FlexCo — Vienna, Austria (incorporating via USP eGründung + ID Austria)
+VXNeo Labs SAS — France (Q4 2026, Sofinnova Partners)
+
+Revenue & Compliance
+
+PROAS Vienna: CAD $1,000/month · 12-month auto-renewing · GDPR DPA signed
+Data deletion: <10 days · Austrian DSG compliant
+EU AI Act: high-risk health AI — conformity deadline August 2026
+
+Funding Pipeline
+
+Ananda Impact Ventures (Munich) — requires EU HoldCo → Netherlands BV
+FFG Kleinprojekt — up to €90,000 PURE GRANT, rolling — TOP priority after FlexCo
+FFG Basisprogramm — up to €3M (grant+loan) for GPU/data center R&D
+aws PreSeed (€267k), Austrian Forschungsprämie (14% cash), Canadian SR&ED (35%) — stackable
+EIC Accelerator (€2.5M+€10M) — Year 2
+Zero Project 2027 — submit by 21 June 2026 (Amrit presents)
+
+Patent Strategy
+
+Austrian Gebrauchsmuster #1 (fall detection + voice pipeline) — ready to file ~€100
+#2 (9-dim memory) and #3 (edge privacy) — drafts Month 3
+PCT via Canadian provisional Month 12
+Review Ada Health EP4679451B1 before filing safety-routing patent
+
+Hiring
+
+Jaspreet Sandhu — AI Architect (India retainer, ₹1,50,000/mo, 15hrs/wk)
+CTO — to hire (equity 2-5%)
+Senior AI/ML Architect — to hire (equity 0.5-2%)
+Vienna summer interns 2026 — Tech + Research/Impact tracks
+
+BCI Roadmap (2027)
+OpenBCI BrainFlow, Synchron, Emotiv — thought-command interface for non-verbal/ALS clients.
+
+Running the Stack
+bash# HETZNER
+docker compose up -d
 source venv/bin/activate
 uvicorn agent.api:app --host 0.0.0.0 --port 8000 --reload
-```
-
-**Telegram bot:**
-```bash
-source venv/bin/activate
 python3 telegram_bot.py
-```
+python3 reauth.py    # when Google token expires
 
-**Cron jobs (run manually for testing):**
-```bash
-source venv/bin/activate
-python3 cron/morning.py       # morning orientation + daily note
-python3 cron/reflection.py    # evening reflection
-python3 cron/decay.py         # salience decay on all memories
-python3 cron/weekly_review.py # weekly summary
-```
+# PI
+sudo systemctl status neo-api neo-wake neo-fall neo-alerts neo-scheduler neo-emotion
+python3 agent/memory/memory_manager.py     # self-test
+python3 agent/routing/neo_model_router.py   # test routing
 
-**Self-test memory system:**
-```bash
-source venv/bin/activate
-python3 agent/memory/memory_manager.py
-```
+Current Priorities (May 2026)
 
-**Self-test task router:**
-```bash
-source venv/bin/activate
-python3 agent/routing/task_router.py
-```
+iOS 1.0.9+15 — awaiting App Review (Info.plist crash fixed) — submitted
+Incorporate FlexCo via usp.gv.at (needs €5,000 in business bank account first)
+File FFG Kleinprojekt after FlexCo incorporates (€90k non-dilutive — highest value)
+File Gebrauchsmuster #1 at patentamt.at (~€100, document ready)
+Submit Zero Project by 21 June 2026 (ideally June 7)
+Wire neo_model_router.py into /ask/v2 endpoint
+Address 20 critical production gaps before Ananda due diligence
+Record 90-second YouTube video of Amrit using Neo
+OVHcloud France VPS (EU data residency)
+chatvx.com coordinator dashboard (Next.js)
 
-**Re-authenticate Google (when token expires):**
-```bash
-python3 reauth.py
-```
 
-**Systemd services (production):**
-```bash
-systemctl status companion-api
-systemctl status neo-telegram
-journalctl -u companion-api -f
-```
-
----
-
-## Architecture
-
-### Agent Pipeline (`agent/agent.py`)
-
-Each request flows through a LangGraph `StateGraph` in this order:
-
-```
-security → router → [classify → recall → respond] → store
-                  ↘ skip (if routed) ↗
-```
-
-1. **security** — scans for injection attempts and PII via regex patterns
-2. **router** — keyword-based task classification; dispatches to a tool handler if matched, bypassing the LLM entirely
-3. **classify** — detects one of 6 conversation modes (navigator, mirror, catalyst, witness, horizon, librarian) or defaults to `Neo`
-4. **recall** — vector-searches Qdrant for the top 6 relevant memories; appends them to the system prompt
-5. **respond** — calls the active LLM model with the mode system prompt + memory context
-6. **store** — writes the input as an Episodic memory, updates Redis state keys, fires `observe_interaction` for continuous learning, and calls `record_turn` for strategic compaction
-
-### Memory System (`agent/memory/memory_manager.py`)
-
-Dual-write to both Neo4j (graph, relationships, salience) and Qdrant (vector search). On recall, matched memories get their salience boosted by `+0.05` in Neo4j. The `run_decay()` function multiplies all unaccessed memories by `0.99` (called nightly via cron).
-
-Memory types: `Episodic`, `Semantic`, `Procedural`, `Affective`, `Goal`, `Belief`, `Identity`, `Contextual`, `Capture`
-
-Embeddings use `all-MiniLM-L6-v2` (384-dim) via `sentence-transformers`. If the model is unavailable, writes zero-vectors (graceful degradation).
-
-### Task Router (`agent/routing/task_router.py`)
-
-Keyword-matching classifies inputs into task types: `github`, `notion`, `shell`, `email`, `memory_store`, `memory_recall`, `vault_write`, `vault_search`, `web_search`, `calendar`. Matched tasks are dispatched to handler functions that call the relevant integration tool, bypassing the LLM.
-
-**PROAS check runs first** — before general task classification — to handle the disability-support case management integration (reads from a Google Drive `.xlsm` spreadsheet).
-
-### Multi-Model Router (`agent/routing/model_router.py`)
-
-Supports 17 model configurations across Anthropic, OpenAI, Google, DeepSeek, Qwen, Kimi, HuggingFace, and local Ollama. Active model is persisted in Redis (`neo:model:default`). Falls back to `claude` (Opus) if unset.
-
-### Continuous Learning (`agent/routing/continuous_learning_v2.py`)
-
-Tracks "instincts" — weighted patterns (confidence 0–1) stored as Redis hashes under `neo:instincts`. Each interaction calls `observe_interaction` which reinforces or creates instincts. Instincts expire after 30 days. Cron runs `prune_expired()` and `evolve()` daily at 05:00.
-
-### Strategic Compaction (`agent/routing/strategic_compaction.py`)
-
-Maintains a rolling session context in Redis. After 20 turns, compacts to 5 using milestone detection (decision made, insight, goal set, topic shift, session end). Keeps the LLM context lean across long sessions.
-
-### Conversation Modes (`agent/modes/mode_prompts.py`)
-
-6 named modes with distinct system prompts, auto-detected from keywords:
-- **navigator** — decision mapping, asks one clarifying question
-- **mirror** — pattern reflection, unflinching
-- **catalyst** — disrupts avoidance, gives one concrete action
-- **witness** — listens only, no advice
-- **horizon** — long-arc thinking, identity over tasks
-- **librarian** — comprehensive memory retrieval and synthesis
-
-### Integrations (`agent/tools/`)
-
-| File | Integration |
-|---|---|
-| `google_tools.py` | Gmail read/send, Google Calendar events |
-| `ms_tools.py` | Microsoft Calendar (OAuth via `ms_token.json`) |
-| `notion_tools.py` | Notion pages and databases |
-| `github_tools.py` | Repo monitoring, issues, shell command execution |
-| `obsidian_tools.py` | Vault markdown files at `/root/vault/` |
-| `proas_tools.py` | PROAS disability-support case mgmt (Google Drive `.xlsm`) |
-
-Google auth tokens live in `google_token.json` (not in `.env`). Run `reauth.py` when they expire.
-
-### Vault Structure
-
-Obsidian-compatible markdown vault at `/root/vault/`:
-```
-00-Inbox / 10-Daily / 20-Reflections / 30-People /
-40-Beliefs / 50-Goals / 60-Patterns / 70-Ideas / 80-Agent-Log
-```
-
-### Redis Key Conventions
-
-| Key | Purpose |
-|---|---|
-| `agent_state` | Last agent state (e.g. `responded:catalyst`) |
-| `last_mode` / `last_response` / `last_task_type` | Current session state (read by `/ws/screen`) |
-| `neo:model:default` | Active model key |
-| `neo:instincts` | Hash of learned instinct objects |
-| `neo:session:turns` / `context` / `milestones` | Strategic compaction state |
-| `router_log` / `security_warnings` | Rolling logs (last 100 entries) |
-
----
-
-## Key Config Notes
-
-- All Python files use hardcoded absolute paths (`/root/companion/...`) in `sys.path.insert` calls — this is intentional for the production deployment, but breaks if the repo is moved.
-- The `venv/` is at `/root/companion/venv`. Always activate before running any agent code.
-- `companion/.env` has a duplicate `NOTION_TOKEN` line — only the first is used.
-- `vxneo/.env` has placeholder values (not filled in) and a wrong `NEO4J_PASSWORD` — the live password is `companion_2026`.
-- The PROAS tool (`proas_tools.py`) is not in `vxneo/agent/tools/` — it's production-only.
+VXNeo Labs Inc. · Ontario, Canada · vxneo.com · contact@vxneolabs.com
+Update this file when major changes occur — ask Claude Code or edit directly.
