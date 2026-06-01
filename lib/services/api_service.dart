@@ -42,7 +42,7 @@ class ApiService {
     };
   }
 
-  // ── Auth ──────────────────────────────────────────────────
+  // -- Auth -----------------------------------------------------------------
 
   static Future<Map<String, dynamic>> signup({
     required String name,
@@ -89,25 +89,30 @@ class ApiService {
     return jsonDecode(r.body);
   }
 
-  // ── Chat ──────────────────────────────────────────────────
+  // -- Chat -----------------------------------------------------------------
 
   static Future<Map<String, dynamic>> sendMessage(String text, {String? userId}) async {
-    final user = await getUser();
-    final userId = user?['user_id'] ?? 'anon';
+    // Resolve user id cleanly: explicit param > stored user > default.
+    // (Previous version shadowed the parameter and always sent 'anon'.)
+    final stored = await getUser();
+    final resolvedUserId = userId
+        ?? stored?['user_id']
+        ?? stored?['id']
+        ?? 'jas_personal';
 
     final r = await http.post(
       Uri.parse('$baseUrl/neo/ask'),
       headers: await headers(),
-      body: jsonEncode({'text': text, 'user_id': userId ?? 'jas_personal'}),
+      body: jsonEncode({'text': text, 'user_id': resolvedUserId}),
     ).timeout(timeout);
 
     if (r.statusCode == 200) {
       return jsonDecode(r.body);
     }
-    return {'error': 'Request failed: ${r.statusCode}'};
+    return {'response': 'Request failed (${r.statusCode}). Please try again.'};
   }
 
-  // ── Models ────────────────────────────────────────────────
+  // -- Models ---------------------------------------------------------------
 
   static Future<Map<String, dynamic>> getModels() async {
     final r = await http.get(
@@ -127,7 +132,7 @@ class ApiService {
     return r.statusCode == 200;
   }
 
-  // ── Memory ────────────────────────────────────────────────
+  // -- Memory ---------------------------------------------------------------
 
   static Future<List<dynamic>> getMemories({String? query}) async {
     final uri = query != null
@@ -151,7 +156,7 @@ class ApiService {
     return r.statusCode == 200;
   }
 
-  // ── Vault ─────────────────────────────────────────────────
+  // -- Vault ----------------------------------------------------------------
 
   static Future<List<dynamic>> getVaultEntries() async {
     final r = await http.get(
@@ -174,11 +179,11 @@ class ApiService {
     return r.statusCode == 200;
   }
 
-  // ── Health ────────────────────────────────────────────────
+  // -- Device ---------------------------------------------------------------
 
   static Future<void> registerFCMToken(String token) async {
-    final r = await http.post(
-      Uri.parse('\/device/register'),
+    await http.post(
+      Uri.parse('$baseUrl/device/register'),
       headers: await headers(),
       body: jsonEncode({'token': token}),
     ).timeout(timeout);
@@ -195,8 +200,3 @@ class ApiService {
     }
   }
 }
-
-
-
-
-

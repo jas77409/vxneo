@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -32,21 +32,55 @@ class NeoVoiceService extends ChangeNotifier {
     return prefs.getString('neo_token');
   }
 
+  // Initialise the speech engine ONLY. Do NOT request mic permission here —
+  // requesting on screen load (before a user gesture) causes iOS to silently
+  // deny and the app never appears in Settings > Privacy > Microphone.
   Future<bool> init() async {
-    final status = await Permission.microphone.request();
-    if (!status.isGranted) {
-      _setError('Microphone permission denied.');
+    try {
+      _sttReady = await _stt.initialize(
+        onError: (e) => debugPrint('[STT] Error: $e'),
+      );
+    } catch (e) {
+      debugPrint('[STT] init failed: $e');
+      _sttReady = false;
+    }
+    return _sttReady;
+  }
+
+  // Request mic permission on a user-initiated action.
+  Future<bool> _ensureMicPermission() async {
+    var status = await Permission.microphone.status;
+    if (status.isGranted) return true;
+
+    if (status.isDenied) {
+      status = await Permission.microphone.request();
+      if (status.isGranted) return true;
+    }
+
+    if (status.isPermanentlyDenied) {
+      _setError('Microphone access is off. Enable it in Settings to talk to Neo.');
+      await openAppSettings();
       return false;
     }
-    _sttReady = await _stt.initialize(
-      onError: (e) => debugPrint('[STT] Error: $e'),
-    );
-    return _sttReady;
+
+    _setError('Microphone permission is needed to talk to Neo.');
+    return false;
   }
 
   Future<void> startListening({String userId = 'jas_personal'}) async {
     if (_state != VoiceState.idle) return;
-    if (!_sttReady) await init();
+
+    final ok = await _ensureMicPermission();
+    if (!ok) return;
+
+    if (!_sttReady) {
+      await init();
+      if (!_sttReady) {
+        _setError('Voice engine unavailable. Please try again.');
+        return;
+      }
+    }
+
     _setState(VoiceState.listening);
     debugPrint('[Neo] Listening for Hey Neo...');
 
@@ -146,6 +180,17 @@ class NeoVoiceService extends ChangeNotifier {
   }
 
   Future<void> triggerManually({required String userId}) async {
+    final ok = await _ensureMicPermission();
+    if (!ok) return;
+
+    if (!_sttReady) {
+      await init();
+      if (!_sttReady) {
+        _setError('Voice engine unavailable. Please try again.');
+        return;
+      }
+    }
+
     if (_state == VoiceState.listening || _state == VoiceState.idle) {
       _stt.stop();
       _setState(VoiceState.detected);

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/chat_provider.dart';
 import '../services/auth_provider.dart';
@@ -23,7 +23,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _voice = NeoVoiceService();
-    _voice.init();
+    _voice.init(); // initialises STT engine only — does NOT request mic permission
 
     // When Neo responds by voice, also add to chat
     _voice.addListener(() {
@@ -48,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userId = context.watch<AuthProvider>().userId ?? 'jas_personal';
+    final userId = context.watch<AuthProvider>().userId;
 
     return ChangeNotifierProvider.value(
       value: _voice,
@@ -105,115 +105,123 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
-        body: Column(children: [
-          // Messages list
-          Expanded(
-            child: Consumer<ChatProvider>(
-              builder: (_, chat, __) {
-                if (chat.messages.isEmpty) return _emptyState(userId);
-                WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-                return ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  itemCount: chat.messages.length + (chat.loading ? 1 : 0),
-                  itemBuilder: (_, i) {
-                    if (i == chat.messages.length) return const _TypingIndicator();
-                    return MessageBubble(message: chat.messages[i]);
-                  },
-                );
-              },
+        // FIX: tap anywhere outside the text field to dismiss the keyboard
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: Column(children: [
+            // Messages list
+            Expanded(
+              child: Consumer<ChatProvider>(
+                builder: (_, chat, __) {
+                  if (chat.messages.isEmpty) return _emptyState(userId);
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                  return ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    itemCount: chat.messages.length + (chat.loading ? 1 : 0),
+                    itemBuilder: (_, i) {
+                      if (i == chat.messages.length) return const _TypingIndicator();
+                      return MessageBubble(message: chat.messages[i]);
+                    },
+                  );
+                },
+              ),
             ),
-          ),
 
-          // Neo voice response card
-          const NeoResponseCard(),
+            // Neo voice response card
+            const NeoResponseCard(),
 
-          // Hey Neo button row
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: HeyNeoButton(userId: userId),
-          ),
+            // Hey Neo button row
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: HeyNeoButton(userId: userId),
+            ),
 
-          // Text input bar
-          _inputBar(),
-        ]),
+            // Text input bar
+            _inputBar(),
+          ]),
+        ),
       ),
     );
   }
 
   Widget _emptyState(String userId) {
     final auth = context.watch<AuthProvider>();
+    final firstName = auth.userName.isNotEmpty ? auth.userName.split(' ').first : 'there';
     return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        // Hey Neo big button in empty state
-        Consumer<NeoVoiceService>(
-          builder: (_, voice, __) => GestureDetector(
-            onTap: () => voice.isListening
-                ? voice.triggerManually(userId: userId)
-                : voice.startListening(userId: userId),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 100, height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: voice.isListening
-                    ? NeoTheme.blue.withOpacity(0.2)
-                    : NeoTheme.bg2,
-                border: Border.all(
-                  color: voice.isListening ? NeoTheme.blue : NeoTheme.border,
-                  width: 2,
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // Hey Neo big button in empty state
+          Consumer<NeoVoiceService>(
+            builder: (_, voice, __) => GestureDetector(
+              onTap: () => voice.isListening
+                  ? voice.triggerManually(userId: userId)
+                  : voice.startListening(userId: userId),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 100, height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: voice.isListening
+                      ? NeoTheme.blue.withOpacity(0.2)
+                      : NeoTheme.bg2,
+                  border: Border.all(
+                    color: voice.isListening ? NeoTheme.blue : NeoTheme.border,
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      voice.isListening ? Icons.hearing : Icons.mic_none_outlined,
+                      color: voice.isListening ? NeoTheme.blue : NeoTheme.muted,
+                      size: 36,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      voice.isListening ? 'Listening' : 'Hey Neo',
+                      style: TextStyle(
+                        color: voice.isListening ? NeoTheme.blue : NeoTheme.muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    voice.isListening ? Icons.hearing : Icons.mic_none_outlined,
-                    color: voice.isListening ? NeoTheme.blue : NeoTheme.muted,
-                    size: 36,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    voice.isListening ? 'Listening' : 'Hey Neo',
-                    style: TextStyle(
-                      color: voice.isListening ? NeoTheme.blue : NeoTheme.muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('Hello, $firstName.',
+            style: const TextStyle(
+              fontFamily: 'Georgia', fontSize: 22,
+              color: NeoTheme.white, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Text('Say "Hey Neo" or tap the mic to start.',
+            style: TextStyle(color: NeoTheme.muted, fontSize: 14)),
+          const SizedBox(height: 32),
+          ...[
+            'What has been on my mind lately?',
+            'Remind me what I was working on',
+            'How am I doing on my goals?',
+          ].map((hint) => GestureDetector(
+            onTap: () => _send(hint),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: NeoTheme.bg2,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: NeoTheme.border),
               ),
+              child: Text(hint,
+                style: const TextStyle(color: NeoTheme.textSecondary, fontSize: 13)),
             ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text('Hello, ${auth.userName.split(' ').first}.',
-          style: const TextStyle(
-            fontFamily: 'Georgia', fontSize: 22,
-            color: NeoTheme.white, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        Text('Say "Hey Neo" or tap the mic to start.',
-          style: TextStyle(color: NeoTheme.muted, fontSize: 14)),
-        const SizedBox(height: 32),
-        ...[
-          'What has been on my mind lately?',
-          'Remind me what I was working on',
-          'How am I doing on my goals?',
-        ].map((hint) => GestureDetector(
-          onTap: () => _send(hint),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: NeoTheme.bg2,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: NeoTheme.border),
-            ),
-            child: Text(hint,
-              style: const TextStyle(color: NeoTheme.textSecondary, fontSize: 13)),
-          ),
-        )),
-      ]),
+          )),
+        ]),
+      ),
     );
   }
 
@@ -230,6 +238,7 @@ class _ChatScreenState extends State<ChatScreen> {
             controller: _controller,
             minLines: 1, maxLines: 5,
             textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.send,
             decoration: InputDecoration(
               hintText: 'Or type to Neo...',
               hintStyle: TextStyle(color: NeoTheme.muted, fontSize: 14),
@@ -264,6 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _send(String text) {
     if (text.trim().isEmpty) return;
     _controller.clear();
+    FocusScope.of(context).unfocus(); // dismiss keyboard after sending
     context.read<ChatProvider>().sendMessage(text);
   }
 
